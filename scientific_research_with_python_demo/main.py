@@ -3,7 +3,7 @@ import numpy as np
 WAVELENGTH = 0.0056  # [unit:m]
 
 def wrap_phase(phase:np.ndarray)->np.ndarray:
-    return (phase + np.pi) % (2 * np.pi) - np.pi
+    return (phase + np.pi) % (2 * np.pi) - np.pi# 缠绕相位
 
 def construct_simulated_arc_phase(dv:float, dh:float, noise_level:float)->np.ndarray:
 
