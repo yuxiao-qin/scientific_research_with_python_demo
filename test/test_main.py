@@ -1,6 +1,6 @@
 import pytest
 import numpy as np
-from scientific_research_with_python_demo.main import v2phase, WAVELENGTH
+from scientific_research_with_python_demo.main import v2phase,h2phase, WAVELENGTH
 
 
 def test_v2phase():
@@ -15,4 +15,9 @@ def test_v2phase():
 
 
 def test_h2phase():
-    pass
+    simulated_h=np.array([10.0,11.0,9.0,8.0,13.0])
+    ture_h=np.array([10]*5)
+    # actual=h2phase(simulated_h)
+    actual=h2phase(ture_h)
+    desired=h2phase(ture_h)
+    assert np.isclose(actual,desired).all()

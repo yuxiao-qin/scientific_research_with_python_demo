@@ -1,7 +1,6 @@
 import numpy as np
 
 WAVELENGTH = 0.0056  # [unit:m]
-
 def wrap_phase(phase:np.ndarray)->np.ndarray:
     return (phase + np.pi) % (2 * np.pi) - np.pi# 缠绕相位,测试
 
@@ -22,7 +21,12 @@ def v2phase(v:float, time_range:np.ndarray=np.arange(30))->np.ndarray:
     return distance * 4 * np.pi / WAVELENGTH  # [unit:rad]
 
 def h2phase(h:float)->np.ndarray:
-    pass
+    B_normal=300#[unit:m]
+    H=780000# satellite vertical height[m]
+    theta=23*np.pi/180
+    R=H/np.cos(theta)
+    Bn=4*np.pi*B_normal/(WAVELENGTH*R*np.sin(theta))
+    return Bn*h
 
 def generate_phase_noise(noise_level:float)->np.ndarray:
     pass
