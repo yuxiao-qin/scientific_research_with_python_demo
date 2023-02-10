@@ -1,6 +1,6 @@
 import pytest
 import numpy as np
-from scientific_research_with_python_demo.main import v2phase,h2phase,generate_phase_noise,construct_simulated_arc_phase, construct_param_search_space,WAVELENGTH
+from scientific_research_with_python_demo.main import v2phase,h2phase,generate_phase_noise,construct_simulated_arc_phase,construct_param_search_space,maximum_main,WAVELENGTH
 
 
 def test_v2phase():
@@ -40,4 +40,10 @@ def test_construct_param_search():
     Search_space1=np.mat(np.arange(-Nsearch[1]*step[1],Nsearch[1]*step[1],step[1]))
     actual=np.dot(A[:,1],Search_space1)
     assert  np.isclose(actual, simulated).all()
+def test_maximum():
+    dphase=np.mat([[1+1j,1+2j,1+3j]]).T
+    search_space=np.mat([[1j,2j,3j],[1j,2j,3j],[1j,2j,3j]])
+    simulated=maximum_main(dphase,search_space)
+    actual=np.exp(3)
+    assert simulated==actual
     
