@@ -1,6 +1,6 @@
 import pytest
 import numpy as np
-from scientific_research_with_python_demo.main import v2phase,h2phase, WAVELENGTH
+from scientific_research_with_python_demo.main import v2phase,h2phase,generate_phase_noise,construct_simulated_arc_phase, WAVELENGTH
 
 
 def test_v2phase():
@@ -21,3 +21,13 @@ def test_h2phase():
     actual=h2phase(ture_h)
     desired=h2phase(ture_h)
     assert np.isclose(actual,desired).all()
+def test_generate_phase_noise():
+    noise=generate_phase_noise(0.1)
+    assert noise.shape==(1,20)
+
+def test_wrap_phase():
+    v_orig=0.01
+    h_orig=[10.0]*20+np.random.normal(size=(1,20))
+    noise_level=0.1
+    phase_unwrapped=construct_simulated_arc_phase(v_orig,h_orig,noise_level)
+    assert phase_unwrapped.shape==(1,21)

@@ -8,16 +8,17 @@ def construct_simulated_arc_phase(dv:float, dh:float, noise_level:float)->np.nda
 
     dv_phase = v2phase(dv)
     dh_phase = h2phase(dh)
-    noise_phase = generate_phase_noise(noise_level)
+    noise_phase = generate_phase_noise(noise_level)*4*np.pi/WAVELENGTH
+    arc_phase=dv_phase + dh_phase + noise_phase
+    return arc_phase
 
-    return wrap_phase(dv_phase + dh_phase + noise_phase)
-
-def v2phase(v:float, time_range:np.ndarray=np.arange(30))->np.ndarray:
+def v2phase(v:float, time_range:np.ndarray=np.arange(20))->np.ndarray:
     """Calculate phase difference from velocity difference (of two points).
     """
     temporal_baseline = 12  # [unit:d]
+    Btemp=temporal_baseline*time_range
     # distance = velocity * days (convert from d to yr because velocity is in m/yr)
-    distance = v * time_range * temporal_baseline / 365   # [unit:m]
+    distance = v * Btemp / 365   # [unit:m]
     return distance * 4 * np.pi / WAVELENGTH  # [unit:rad]
 
 def h2phase(h:float)->np.ndarray:
@@ -26,13 +27,20 @@ def h2phase(h:float)->np.ndarray:
     theta=23*np.pi/180
     R=H/np.cos(theta)
     Bn=4*np.pi*B_normal/(WAVELENGTH*R*np.sin(theta))
-    return Bn*h
+    return Bn*h*4*np.pi/WAVELENGTH
 
 def generate_phase_noise(noise_level:float)->np.ndarray:
-    pass
+    noise=np.random.normal(loc=0.0,scale=noise_level,size=(1,20))
+    return noise
 
-
-
+v_orig=0.01
+h_orig=[10]*20+np.random.normal(loc=0,scale=1,size=(1,20))
+noise_level=0.1
+phase_unwrapped=construct_simulated_arc_phase(v_orig,h_orig,noise_level).T
+print(h_orig)
+print(h2phase(h_orig))
+print(wrap_phase(phase_unwrapped))
+# print(type(generate_phase_noise(0.1)))
 # def estimate_parameters(constructed_simulated_phase):
 #     # TODO: implement this function
 #     return est_dv, est_dh
