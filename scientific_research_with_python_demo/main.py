@@ -33,6 +33,11 @@ def generate_phase_noise(noise_level:float)->np.ndarray:
     noise=np.random.normal(loc=0.0,scale=noise_level,size=(1,20))
     return noise
 
+def construct_param_search_space(step:float,Nsearch,A_matrix)->np.ndarray:
+    Search_space=np.mat(np.arange(-Nsearch*step,Nsearch*step,step))
+    Search_space_phase=np.dot(A_matrix,Search_space)
+    return Search_space_phase
+    
 v_orig=0.01
 h_orig=[10]*20+np.random.normal(loc=0,scale=1,size=(1,20))
 noise_level=0.1

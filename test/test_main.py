@@ -1,6 +1,6 @@
 import pytest
 import numpy as np
-from scientific_research_with_python_demo.main import v2phase,h2phase,generate_phase_noise,construct_simulated_arc_phase, WAVELENGTH
+from scientific_research_with_python_demo.main import v2phase,h2phase,generate_phase_noise,construct_simulated_arc_phase, construct_param_search_space,WAVELENGTH
 
 
 def test_v2phase():
@@ -30,4 +30,14 @@ def test_wrap_phase():
     h_orig=[10.0]*20+np.random.normal(size=(1,20))
     noise_level=0.1
     phase_unwrapped=construct_simulated_arc_phase(v_orig,h_orig,noise_level)
-    assert phase_unwrapped.shape==(1,21)
+    assert phase_unwrapped.shape==(1,20)
+def test_construct_param_search():
+    Bn=np.mat(np.array([1]*20)).T
+    simulated=construct_param_search_space(1,20,Bn)
+    A = np.mat(np.array([np.linspace(2.0,40,20),[1.0]*20]).T)
+    step=[0.001,1]
+    Nsearch=[200,20]
+    Search_space1=np.mat(np.arange(-Nsearch[1]*step[1],Nsearch[1]*step[1],step[1]))
+    actual=np.dot(A[:,1],Search_space1)
+    assert  np.isclose(actual, simulated).all()
+    
