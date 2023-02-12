@@ -83,94 +83,33 @@ git push origin newfeature
 
 When you feel that your work is ready to be reviewed and merged into the upstream repo, you should submit a pull request. This should be done in the Github Web UI:
 
+![start a pull request](docs/assets/start_a_pull_request.png)
 
-### Cleaning Up Your Work
+Submit a pull request to the upstream repo's `develop` branch:
+![submit a pull request](docs/assets/submit_a_pull_request.png)
 
-Prior to submitting your pull request, you might want to do a few things to clean up your branch and make it as simple as possible for the original repo's maintainer to test, accept, and merge your work.
+After this, tell the upstream repo's maintainers that you have submitted a pull request and that they should review it. You can do this by leaving a comment on the issue you are working on, or by sending them a message.
 
-If any commits have been made to the upstream master branch, you should rebase your development branch so that merging it will be a simple fast-forward that won't require any conflict resolution work.
+### When Your Pull Request is Merged, or When You Start to Work in the Morning
+
+Since the upstream could evolve everyday, you should always keep your fork up to date with the upstream. To do so, you should follow the steps below:
 
 ```shell
-# Fetch upstream master and merge with your repo's master branch
+# Fetch upstream develop and merge with your repo's develop branch
 git fetch upstream
-git checkout master
-git merge upstream/master
+git checkout develop
+git merge upstream/develop
 
-# If there were any new commits, rebase your development branch
+# Go the the branch you're currently working on, and update it with the upsteam's develop branch:
 git checkout newfeature
-git rebase master
+git rebase develop
+
+# push to your forked repo after the update:
+git push origin newfeature
 ```
 
-Now, it may be desirable to squash some of your smaller commits down into a small number of larger more cohesive commits. You can do this with an interactive rebase:
-
-```shell
-# Rebase all commits on your development branch
-git checkout
-git rebase -i master
-```
-
-This will open up a text editor where you can specify which commits to squash.
-
-### Submitting
-
-Once you've committed and pushed all of your changes to GitHub, go to the page for your fork on GitHub, select your development branch, and click the pull request button. If you need to make any adjustments to your pull request, just push the updates to GitHub. Your pull request will automatically track the changes on your development branch and update.
-
-## Accepting and Merging a Pull Request
-
-Take note that unlike the previous sections which were written from the perspective of someone that created a fork and generated a pull request, this section is written from the perspective of the original repository owner who is handling an incoming pull request. Thus, where the "forker" was referring to the original repository as `upstream`, we're now looking at it as the owner of that original repository and the standard `origin` remote.
-
-### Checking Out and Testing Pull Requests
-Open up the `.git/config` file and add a new line under `[remote "origin"]`:
-
-```
-fetch = +refs/pull/*/head:refs/pull/origin/*
-```
-
-Now you can fetch and checkout any pull request so that you can test them:
-
-```shell
-# Fetch all pull request branches
-git fetch origin
-
-# Checkout out a given pull request branch based on its number
-git checkout -b 999 pull/origin/999
-```
-
-Keep in mind that these branches will be read only and you won't be able to push any changes.
-
-### Automatically Merging a Pull Request
-In cases where the merge would be a simple fast-forward, you can automatically do the merge by just clicking the button on the pull request page on GitHub.
-
-### Manually Merging a Pull Request
-To do the merge manually, you'll need to checkout the target branch in the source repo, pull directly from the fork, and then merge and push.
-
-```shell
-# Checkout the branch you're merging to in the target repo
-git checkout master
-
-# Pull the development branch from the fork repo where the pull request development was done.
-git pull https://github.com/forkuser/forkedrepo.git newfeature
-
-# Merge the development branch
-git merge newfeature
-
-# Push master with the new feature merged into it
-git push origin master
-```
-
-Now that you're done with the development branch, you're free to delete it.
-
-```shell
-git branch -d newfeature
-```
-
-
-
-**Copyright**
-
-Copyright 2017, Chase Pettit
-
-MIT License, http://www.opensource.org/licenses/mit-license.php
+**Main Reference**
+* [GitHub Standard Fork & Pull Request Workflow](https://gist.github.com/Chaser324/ce0505fbed06b947d962)
 
 **Additional Reading**
 * [Atlassian - Merging vs. Rebasing](https://www.atlassian.com/git/tutorials/merging-vs-rebasing)
