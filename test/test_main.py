@@ -17,8 +17,8 @@ def test_v2phase():
 def test_h2phase():
     # construct a simulated case
     simuated_h = 0.1 * WAVELENGTH # [unit:m]
-    simuated_baseline_range = np.array([0,1,2]) * R * np.sin(SIDE_ANGLE * np.pi / 180)
-    actual = h2phase(simuated_h, simuated_baseline_range)
+    simuated_normal_baseline_range = np.array([0,1,2]) * R * np.sin(SIDE_ANGLE * np.pi / 180)
+    actual = h2phase(simuated_h, simuated_normal_baseline_range)
     # desired phase is calculated by hand
     desired = np.array([0.0, 0.1, 0.2]) * 4 * np.pi
 

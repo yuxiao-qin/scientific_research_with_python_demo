@@ -24,10 +24,10 @@ def v2phase(v:float, time_range:np.ndarray=np.arange(30))->np.ndarray:
     distance = v * time_range * temporal_baseline / 365   # [unit:m]
     return distance * 4 * np.pi / WAVELENGTH  # [unit:rad]
 
-def h2phase(h:float, baseline_range:np.ndarray=np.arange(0, 600, 20))->np.ndarray:
+def h2phase(h:float, normal_baseline_range:np.ndarray=np.arange(0, 600, 20))->np.ndarray:
     """Calculate phase difference from height difference (of two points).
     """
-    distance = h * baseline_range / (R * np.sin(SIDE_ANGLE * np.pi / 180)) # [unit:m]
+    distance = h * normal_baseline_range / (R * np.sin(SIDE_ANGLE * np.pi / 180)) # [unit:m]
     return distance * 4 * np.pi / WAVELENGTH  # [unit:rad]
 
 def generate_phase_noise(noise_level:float)->np.ndarray:
