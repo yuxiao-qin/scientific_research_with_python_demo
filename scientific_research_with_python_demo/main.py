@@ -1,8 +1,8 @@
 import numpy as np
 
 WAVELENGTH = 0.0056  # [unit:m]
-R = 786000 # [unit:m]
-SIDE_ANGLE = 39.14 # [unit:deg]
+R0 = 786000 # [unit:m]
+INCIDENCE_ANGLE = 39.14 # [unit:deg]
 
 
 def wrap_phase(phase:np.ndarray)->np.ndarray:
@@ -27,7 +27,7 @@ def v2phase(v:float, time_range:np.ndarray=np.arange(30))->np.ndarray:
 def h2phase(h:float, normal_baseline_range:np.ndarray=np.arange(0, 600, 20))->np.ndarray:
     """Calculate phase difference from height difference (of two points).
     """
-    distance = h * normal_baseline_range / (R * np.sin(SIDE_ANGLE * np.pi / 180)) # [unit:m]
+    distance = h * normal_baseline_range / (R0 * np.sin(INCIDENCE_ANGLE * np.pi / 180)) # [unit:m]
     return distance * 4 * np.pi / WAVELENGTH  # [unit:rad]
 
 def generate_phase_noise(noise_level:float)->np.ndarray:
