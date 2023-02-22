@@ -7,33 +7,34 @@ def wrap_phase(phase: np.ndarray) -> np.ndarray:
     return (phase + np.pi) % (2 * np.pi) - np.pi
 
 
-def construct_simulated_arc_phase(dv: float, dh: float, noise_level: float) -> np.ndarray:
+def construct_simulated_arc_phase(dv: float, dh: float, noise_level: float, time_range) -> np.ndarray:
 
-    dv_phase = v2phase(dv)
-    dh_phase = h2phase(dh)
-    noise_phase = generate_phase_noise(noise_level)*4*np.pi/WAVELENGTH
-    arc_phase = dv_phase + dh_phase + noise_phase
+    dv_phase = v2phase(dv, time_range)[0]
+    dh_phase = h2phase(dh)[0]
+    noise_phase = generate_phase_noise(noise_level)
+    arc_phase = wrap_phase(dv_phase + dh_phase + noise_phase)
     return arc_phase
 
 
-def v2phase(v: float, time_range: np.ndarray = np.arange(20)) -> np.ndarray:
+def v2phase(v: float, time_range) -> np.ndarray:
     """Calculate phase difference from velocity difference (of two points).
     """
     temporal_baseline = 12  # [unit:d]
     temporal_samples = temporal_baseline*time_range
     # distance = velocity * days (convert from d to yr because velocity is in m/yr)
-    distance = v * temporal_samples / 365   # [unit:m]
-    v2phase_coefficeint = 4 * np.pi * temporal_samples / WAVELENGTH*365
+    v2phase_coefficeint = 4 * np.pi * temporal_samples / (WAVELENGTH*365)
     return v2phase_coefficeint*v, v2phase_coefficeint  # [unit:rad]
 
 
 def h2phase(h: float) -> np.ndarray:
-    normal_baseline = 300  # [unit:m]
+    normal_baseline = np.random.normal(size=(1, 20))*300  # [unit:m]
+    baseline_erro = np.random.rand(1, 20)
+    err_baseline = normal_baseline+baseline_erro
     H = 780000  # satellite vertical height[m]
     incidence_angle = 23*np.pi/180
     R = H/np.cos(incidence_angle)
-    h2ph_coefficient = 4*np.pi*normal_baseline / \
-        WAVELENGTH*R*np.sin(incidence_angle)
+    h2ph_coefficient = 4*np.pi*err_baseline / \
+        (WAVELENGTH*R*np.sin(incidence_angle))
     return h2ph_coefficient*h, h2ph_coefficient
 
 
@@ -83,7 +84,15 @@ def maximum_coh_temporal(dphase, search_space, row_num_serach, num_search, parm,
 # print(h_orig)
 # print(h2phase(h_orig))
 # print(wrap_phase(phase_unwrapped))
-# print(type(generate_phase_noise(0.1)))
+# print(generate_phase_noise(0.1))
 # def estimate_parameters(constructed_simulated_phase):
 #     # TODO: implement this function
 #     return est_dv, est_dh
+a = h2phase(40)[0]
+print(a)
+# print(h2phase(40)[0].shape)
+# simuated_v = 0.1 * WAVELENGTH  # [unit:m/yr]
+# simuated_time_range = np.arange(1, 21, 1).reshape(1, 20) * 365 / 12
+# print(type(v2phase(simuated_v, simuated_time_range)))
+# print(simuated_time_range)
+# print(np.array(np.linspace(1, 20, 20) * 0.1 * 4 * np.pi))
