@@ -1,6 +1,6 @@
 import pytest
 import numpy as np
-from scientific_research_with_python_demo.main import v2phase, h2phase, generate_phase_noise, construct_simulated_arc_phase, construct_param_search_space, maximum_coh_temporal, WAVELENGTH
+from scientific_research_with_python_demo.main import v2phase, h2phase, sim_phase_noise, sim_arc_phase, construct_param_search_space, maximum_coh_temporal, WAVELENGTH
 
 
 def test_v2phase():
@@ -21,7 +21,7 @@ def test_h2phase():
 
 
 def test_generate_phase_noise():
-    noise = generate_phase_noise(0.1)
+    noise = sim_phase_noise(0.1)
     assert noise.shape == (1, 20)
 
 
@@ -30,7 +30,7 @@ def test_wrap_phase():
     h_orig = 40
     time_range = np.arange(1, 21, 1).reshape(1, 20) * 365 / 12
     noise_level = 0.1
-    phase_unwrapped = construct_simulated_arc_phase(
+    phase_unwrapped = sim_arc_phase(
         v_orig, h_orig, noise_level, time_range)
     assert phase_unwrapped.shape == (1, 20)
 

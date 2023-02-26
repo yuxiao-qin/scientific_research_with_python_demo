@@ -4,20 +4,32 @@ WAVELENGTH = 0.0056  # [unit:m]
 
 
 def wrap_phase(phase: np.ndarray) -> np.ndarray:
+    """wrap phase to [-pi,pi]
+        input: phase
+        output:wrap_phase
+    """
     return (phase + np.pi) % (2 * np.pi) - np.pi
 
 
-def construct_simulated_arc_phase(dv: float, dh: float, noise_level: float, time_range) -> np.ndarray:
-
+def sim_arc_phase(dv: float, dh: float, noise_level: float, time_range) -> np.ndarray:
+    """ simulate phase of arc between two points based on a module(topographic_height + linear_deformation)
+        input:  v: defomation rate per year
+                time_range
+                h:topographic height per arc
+        output: arc_phase: simulated observation phases = topographic_phase + deformation_phase + nosie
+    """
     dv_phase = v2phase(dv, time_range)[0]
     dh_phase = h2phase(dh)[0]
-    noise_phase = generate_phase_noise(noise_level)
+    noise_phase = sim_phase_noise(noise_level)
     arc_phase = wrap_phase(dv_phase + dh_phase + noise_phase)
     return arc_phase
 
 
 def v2phase(v: float, time_range) -> np.ndarray:
     """Calculate phase difference from velocity difference (of two points).
+        input: v:defomation rate
+               time_range:the factor to caclulate temporal baseline
+        output: v2phase_coefficeint(temopral baseline)、v2phase_coefficeint*v(deformation_phase)
     """
     temporal_baseline = 12  # [unit:d]
     temporal_samples = temporal_baseline*time_range
@@ -27,18 +39,29 @@ def v2phase(v: float, time_range) -> np.ndarray:
 
 
 def h2phase(h: float) -> np.ndarray:
-    normal_baseline = np.random.normal(size=(1, 20))*300  # [unit:m]
-    baseline_erro = np.random.rand(1, 20)
+    """Calculate phase difference from topographic height (of two points)
+        Input: height per acr
+        output:h2ph_coefficient、h2ph_coefficient*h（Topographic phase）
+
+        formation:phase_topo = Height_arc*4pi*Bn/Ri*sin(incidence_angle)
+    """
+    normal_baseline = np.random.normal(
+        size=(1, 20))*300    # perpendicular baseline[unit:m]
+    baseline_erro = np.random.rand(1, 20)    # error of perpendicular baseline
     err_baseline = normal_baseline+baseline_erro
-    H = 780000  # satellite vertical height[m]
-    incidence_angle = 23*np.pi/180
-    R = H/np.cos(incidence_angle)
+    H = 780000    # satellite vertical height[m]
+    incidence_angle = 23*np.pi/180    # the local incidence angle
+    R = H/np.cos(incidence_angle)    # range to the master antenna.
     h2ph_coefficient = 4*np.pi*err_baseline / \
         (WAVELENGTH*R*np.sin(incidence_angle))
     return h2ph_coefficient*h, h2ph_coefficient
 
 
-def generate_phase_noise(noise_level: float) -> np.ndarray:
+def sim_phase_noise(noise_level: float) -> np.ndarray:
+    """ simulate phase noise based on constant noise level
+        input: noise_level
+        output: noise
+    """
     noise = np.random.normal(loc=0.0, scale=noise_level,
                              size=(1, 20))*(4*np.pi/WAVELENGTH)
     return noise
@@ -48,9 +71,11 @@ def construct_param_search_space(step: float, Nsearch, A_matrix) -> np.ndarray:
     """
     construct estimated parameters' search space
     such as height [-10:1:10]
-    input: step  :step for search
-           2*Nsearch :number of paramters we can search
-    创建参数搜索区域[-10:1:10]"""
+    input: step:  step for search
+           2*Nsearch :  number of paramters we can search
+            创建参数搜索区域[-10:1:10]
+    output: Search_space_phase
+    """
     Search_space = np.mat(np.arange(-Nsearch*step, Nsearch*step, step))
     Search_space_phase = np.dot(A_matrix, Search_space)
     return Search_space_phase
