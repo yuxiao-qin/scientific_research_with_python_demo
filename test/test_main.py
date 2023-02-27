@@ -1,6 +1,6 @@
 import pytest
 import numpy as np
-from scientific_research_with_python_demo.main import v2phase, h2phase, sim_phase_noise, sim_arc_phase, construct_param_search_space, maximum_coh_temporal, WAVELENGTH
+from scientific_research_with_python_demo.main import v2phase, h2phase, sim_phase_noise, sim_arc_phase, search_parm_solution, maximum_temporal_coh, WAVELENGTH
 
 
 def test_v2phase():
@@ -37,7 +37,7 @@ def test_wrap_phase():
 
 def test_construct_param_search():
     Bn = np.mat(np.array([1]*20)).T
-    simulated = construct_param_search_space(1, 20, Bn)
+    simulated = search_parm_solution(1, 20, Bn)
     A = np.mat(np.array([np.linspace(2.0, 40, 20), [1.0]*20]).T)
     step = [0.001, 1]
     Nsearch = [200, 20]
@@ -56,8 +56,8 @@ def test_maximum():
     parm = [0, 0]
     Nsearch = [1, 1]
     step = [1, 2]
-    simulated = maximum_coh_temporal(dphase, search_space,
-                                     row_num, num_search, parm, Nsearch, step)
+    simulated = maximum_temporal_coh(dphase, search_space,
+                                     num_search)
     # simulated=[best, parm, a, best_index],a is the index of param_search
     # assert simulated[0] == 1
     # assert simulated[1] == [[-1], [-2]]
