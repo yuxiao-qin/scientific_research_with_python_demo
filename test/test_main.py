@@ -1,6 +1,6 @@
 import pytest
 import numpy as np
-from scientific_research_with_python_demo.main import v2phase, h2phase, WAVELENGTH, R0, INCIDENCE_ANGLE
+from scientific_research_with_python_demo.main import v2phase, h2phase, WAVELENGTH, R0, INCIDENCE_ANGLE, generate_phase_noise, construct_simulated_arc_phase
 
 
 def test_v2phase():
@@ -24,3 +24,10 @@ def test_h2phase():
 
     assert np.isclose(actual, desired).all()
 
+def test_generate_phase_noise():
+    simulated_noise_level = 1.0
+    actual_noise = generate_phase_noise(simulated_noise_level)
+    assert actual_noise.shape == (1, 30) and (abs(np.mean(actual_noise) - 0.0) < 0.3) and (abs(np.var(actual_noise) - 1.0) < 0.3)
+
+def test_construct_simulated_arc_phase():
+    pass
