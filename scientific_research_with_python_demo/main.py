@@ -4,7 +4,7 @@ import numpy as np
 WAVELENGTH = 0.0056  # [unit:m]
 H = 780000    # satellite vertical height[m]
 Incidence_angle = 23*np.pi/180    # the local incidence angle
-R = H/np.cos(Incidence_angle)    # range to the master antenna.
+R = H/np.cos(Incidence_angle)    # range to the master antenna. test
 
 
 def wrap_phase(phase: np.ndarray) -> np.ndarray:
