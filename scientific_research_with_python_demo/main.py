@@ -19,19 +19,21 @@ def wrap_phase(phase: np.ndarray) -> np.ndarray:
     return (phase + np.pi) % (2 * np.pi) - np.pi
 
 
-def sim_arc_phase(v: float, h: float, noise_level: float, time_range) -> np.ndarray:
+def sim_arc_phase(v: float, h: float, noise_level: float, time_range, normal_baseline: float) -> np.ndarray:
     """ 
     simulate phase of arc between two points based on a module(topographic_height + linear_deformation)
 
     input:  v: defomation rate per year
             time_range
             h:topographic height per arc
+            time_range
+            normal_baseline
 
     output: arc_phase: simulated observation phases = topographic_phase + deformation_phase + nosie
 
     """
     v_phase = v2phase(v, time_range)[0]
-    h_phase = h2phase(h)[0]
+    h_phase = h2phase(h, normal_baseline)[0]
     noise_phase = sim_phase_noise(noise_level)
     arc_phase = wrap_phase(v_phase + h_phase + noise_phase)
 
@@ -59,24 +61,25 @@ def v2phase(v: float, time_range) -> np.ndarray:
     return v2phase_coefficeint*v, v2phase_coefficeint  # [unit:rad]
 
 
-def h2phase(h: float) -> np.ndarray:
+def h2phase(h: float, normal_baseline: float) -> np.ndarray:
     """
     Calculate phase difference from topographic height (of two points)
 
     Input: height per acr
+           normal_baseline : perpendicular baseline[unit:m]
 
     output:
     h2ph_coefficient: height-to-phase conversion factor
     h2ph_coefficient*h: Topographic phase
 
     """
-    # perpendicular baseline[unit:m]
-    normal_baseline = np.random.normal(size=(1, 20))*300
+
+    # normal_baseline = np.random.normal(size=(1, 20))*300
     # error of perpendicular baseline
-    baseline_erro = np.random.rand(1, 20)
-    err_baseline = normal_baseline+baseline_erro
+    # baseline_erro = np.random.rand(1, 20)
+    # err_baseline = normal_baseline+baseline_erro
     # compute height-to-phase conversion factor
-    h2ph_coefficient = 4*np.pi*err_baseline / \
+    h2ph_coefficient = 4*np.pi*normal_baseline / \
         (WAVELENGTH*R*np.sin(Incidence_angle))
 
     return h2ph_coefficient*h, h2ph_coefficient
@@ -121,8 +124,35 @@ def search_parm_solution(step: float, Nsearch, A_matrix) -> np.ndarray:
 
 def model_phase(search_phase1, search_phase2, num_serach) -> np.ndarray:
     """
-    compute model_phase based on different paramters (v,h) 
-    using kronecker to create a two-dimension matrix to 
+    compute model_phase(φ_model) based on different paramters (v,h) ,
+    which is the phase of a number of interferograms phase per arc.
+    -----------------------------------------------------------------------------------
+    Since we have a range of parameter v and another range of paramters h every iteration,
+    we have got phase_height and phase_v whose dimension 
+    related to its 'number of search solution'.
+    In this case , we have to get a combination of phase based on each v and h 
+    based on 'The multiplication principle of permutations and combinations'
+
+    For example, we get a range of  parameter v (dimension: 1*num_search_v) 
+    and a range of parameter  h (dimension: 1*num_search_h)
+    In one case , we can have a combination of (v,h) (dimension: num_search_v*num_search_h)
+
+    Since we have 'Number of ifg (Nifg)' interferograms, each parmamters will have Nifg phases.
+    Then , we get get a range of phase based parameter's pair (v,h) 
+    named φ_model (dimension: Nifg*(num_search_v*num_search_v)
+    ---------------------------------------------------------------------------------
+    In our case , we can firtsly computer phase 
+    based on a range of paramters of Nifg interferograms
+    φ_height(dimension:Nifg*num_search_h),
+    φ_v(dimension:Nifg*num_search_v).
+
+    Then we have to create a combination φ_height and φ_v in the dimension of interferograms
+    φ_model (dimension: Nifg*(num_search_v*num_search_v)
+    Kronecker product is introduced in our case,
+    we use 'kron' to extend dimension of φ_height or φ_v to
+    dimension(Nifg*(num_search_v*num_search_v)) 
+    and then get add φ_model by adding extended φ_height and φ_v.
+    ---------------------------------------------------------------------------------
     display model_phase(3-dimesion:num_v,num_h,num_ifg)
 
     input: 
