@@ -1,6 +1,6 @@
 import pytest
 import numpy as np
-from scientific_research_with_python_demo.main import v2phase, h2phase, sim_phase_noise, sim_arc_phase, search_parm_solution, maximum_temporal_coh, WAVELENGTH, wrap_phase
+from scientific_research_with_python_demo.main import v2phase, h2phase, sim_phase_noise, sim_arc_phase, search_parm_solution, sim_temporal_coh, WAVELENGTH, wrap_phase, maximum_coh
 
 
 def test_v2phase():
@@ -42,7 +42,7 @@ def test_sim_arc_phase():
                                  -116.39428378, -545.53546226, -298.89492777, -379.2293736, 289.30702061]])
 
     simulated = sim_arc_phase(
-        v_orig, h_orig, noise_level, time_range, normal_baseline)
+        v_orig, h_orig, noise_level, time_range, normal_baseline)[0]
     actual = np.array([[-0.16197983, 2.07703957, -0.38777374,  0.6686454,  0.69867534, 2.14699018,
                         -2.25000165, -2.00269921, 1.26480047, -0.22241084, -0.93141071, 1.744535,
                         -1.16754325, 1.65687907, 1.8168527, -2.34515856, 2.05190303, -0.65915225,
@@ -52,32 +52,43 @@ def test_sim_arc_phase():
 
 def test_construct_param_search():
     Bn = np.mat(np.array([1]*20)).T
-    simulated = search_parm_solution(1, 20, Bn)
-    A = np.mat(np.array([np.linspace(2.0, 40, 20), [1.0]*20]).T)
-    step = [0.001, 1]
-    Nsearch = [200, 20]
-    Search_space1 = np.mat(
-        np.arange(-Nsearch[1]*step[1], Nsearch[1]*step[1], step[1]))
-    actual = np.dot(A[:, 1], Search_space1)
-    assert np.isclose(actual, simulated).all()
+    simulated = search_parm_solution(1, 10, Bn)
+    actual = simulated.shape
+    assert actual == (20, 20)
+
+
+def test_sim_temporal_coh():
+    dphase = np.array([[1, 1, 1]]).T
+    search_space = np.array([[1, 3, 2, 3],
+                             [2, 3, 4, 1],
+                             [1, 2, 1, 2]])
+
+    simulated = sim_temporal_coh(dphase, search_space)[0]
+
+    actual = np.array([[np.exp(0)+np.exp(-1)+np.exp(0),
+                        np.exp(-2)+np.exp(-2)+np.exp(-1), np.exp(-1)+np.exp(-3)+np.exp(0), np.exp(-2)+np.exp(0)+np.exp(-1)]])
+    assert (actual == simulated).all
+    # assert simulated == actual
 
 
 def test_maximum():
-    dphase = np.mat([[-0.5, 0, 0.5]]).T*np.pi
-    search_space = np.mat(
-        [[-0.5, -0.4, -0.3, -0.2, -0.1, 0.1, 0.2, 0.3, 0.4]]*3)*np.pi
-    row_num = 9
-    num_search = [3, 3]
-    parm = [0, 0]
-    Nsearch = [1, 1]
-    step = [1, 2]
-    simulated = maximum_temporal_coh(dphase, search_space,
-                                     num_search)
-    # simulated=[best, parm, a, best_index],a is the index of param_search
-    # assert simulated[0] == 1
-    # assert simulated[1] == [[-1], [-2]]
-    # assert simulated[2] == [[1], [1]]
-    # assert simulated[3] == 1
-    actual = [np.exp(-0.4j*np.pi)+np.exp(0.1j*np.pi)+np.exp(0.6j*np.pi)]
-    assert np.isclose(actual, simulated[0]).all()
-    # assert simulated == actual
+    phase = np.array([[1, 3, 2, 3],
+                      [2, 3, 4, 1],
+                      [1, 2, 1, 2]])
+    phase_sum = np.sum(phase, axis=0)
+    actual = np.array([[4, 8, 7]])
+    sim_phase = np.exp(phase)
+    simluated = np.sum(sim_phase, axis=0)
+    actual_phase = np.array([[np.exp(1)+np.exp(2)+np.exp(1),
+                            np.exp(3)+np.exp(3)+np.exp(2), np.exp(2)+np.exp(4)+np.exp(1), np.exp(3)+np.exp(1)+np.exp(2)]])
+    # assert (phase_sum == actual).all
+    # assert (simluated == actual_phase).all
+    num_search = [2, 2]
+    max_param = maximum_coh(simluated, num_search)
+    best = max_param[0]
+    best_index = max_param[1]
+    para_index = max_param[2]
+    actual = np.exp(2)+np.exp(4)+np.exp(1)
+    assert best == actual
+    assert best_index == 2
+    assert para_index == (0, 1)

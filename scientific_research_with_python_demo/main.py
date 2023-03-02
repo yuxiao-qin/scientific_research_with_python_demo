@@ -34,10 +34,12 @@ def sim_arc_phase(v: float, h: float, noise_level: float, time_range, normal_bas
     """
     v_phase = v2phase(v, time_range)[0]
     h_phase = h2phase(h, normal_baseline)[0]
+    v2ph = v2phase(v, time_range)[1]
+    h2ph = h2phase(h, normal_baseline)[0]
     noise_phase = sim_phase_noise(noise_level)
     arc_phase = wrap_phase(v_phase + h_phase + noise_phase)
 
-    return arc_phase
+    return arc_phase, v2ph, h2ph
 
 
 def v2phase(v: float, time_range) -> np.ndarray:
@@ -94,8 +96,9 @@ def sim_phase_noise(noise_level: float) -> np.ndarray:
     output: noise
 
     """
-    noise = np.random.normal(loc=0.0, scale=noise_level,
-                             size=(1, 20))*(4*np.pi/WAVELENGTH)
+    noise = np.random.uniform(0, noise_level, 20)*(4*np.pi/180)
+    # noise = np.random.normal(loc=0.0, scale=noise_level,
+    #                          size=(1, 20))*(4*np.pi/180)
 
     return noise
 
@@ -116,10 +119,11 @@ def search_parm_solution(step: float, Nsearch, A_matrix) -> np.ndarray:
     output: Search_phase
 
     """
-    parm_space = np.mat(np.arange(-Nsearch*step, Nsearch*step, step))
+    # parm_space = np.mat(np.arange(-Nsearch*step, Nsearch*step, step))
+    parm_space = np.mat(np.arange(0, Nsearch*step, step))
     phase_space = np.dot(A_matrix, parm_space)
 
-    return phase_space
+    return phase_space, parm_space
 
 
 def model_phase(search_phase1, search_phase2, num_serach) -> np.ndarray:
@@ -164,34 +168,39 @@ def model_phase(search_phase1, search_phase2, num_serach) -> np.ndarray:
     search_pace
 
     """
+
     search_space = np.kron(search_phase1, np.ones(
-        1, num_serach[1]))+np.kron(np.ones(1, num_serach[0]), search_phase2)
+        (1, num_serach[1])))+np.kron(np.ones((1, num_serach[0])), search_phase2)
 
     return search_space
 
 
-def maximum_temporal_coh(arc_phase, search_space, num_search):
+def sim_temporal_coh(arc_phase, search_space):
     """caclulate temporal coherence per arc and
-       computing (v,h) by maximizing the temporal coherence 
        input: arc_phase: simulated observation phases 
               search_space: model phase
-              num_search: number paramters we search
-       output: best:best conherence
-               best_index :the index of best coherence per (v,h)
-               parm_index
+
+       output: coh_t : temporal coherence
     """
     search_size = search_space.shape[1]
     coh_phase = arc_phase*np.ones((1, search_size))-search_space
     # resdual_phase = phase_observation - phase_model
+    size_c = coh_phase.shape
     coh_t = np.sum(np.exp(1j*coh_phase), axis=0)
+    size_t = coh_t.shape
     # coherence = (1/Nifg)*Σexp(j*resdual_phase)
+
+    return coh_t, size_c, size_t
+
+
+def maximum_coh(coh_t, num_search):
     best = np.max(coh_t)
-    best_index = np.argmax(coh_t, axis=1)
-    parm_index = np.unravel_index(
-        best_index, (num_search[1], num_search[0]), order="C")
+    best_index = np.argmax(coh_t)
+    best_cot = coh_t[:, best_index]
+    param_index = np.unravel_index(
+        best_index, (num_search[0], num_search[1]), order="F")
 
-    return best, parm_index, best_index
-
+    return best, best_index, param_index, best_cot
 
 # v_orig = 0.01
 # h_orig = [10]*20+np.random.normal(loc=0, scale=1, size=(1, 20))

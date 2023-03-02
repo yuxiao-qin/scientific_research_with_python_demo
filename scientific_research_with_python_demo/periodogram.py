@@ -1,12 +1,15 @@
+from main import v2phase, h2phase, sim_phase_noise, sim_arc_phase, search_parm_solution, sim_temporal_coh, model_phase, maximum_coh
 import numpy as np
-from scientific_research_with_python_demo.main import v2phase, h2phase, sim_phase_noise, sim_arc_phase, search_parm_solution, maximum_temporal_coh
-
-
+import sys
+sys .path.append(
+    '/data/tests/jiaxing/scientific_research_with_python_demo/scientific_research_with_python_demo')
 # Initialize
 
 v_orig = 0.05  # [mm/year]
 h_orig = 30  # [m]
 noise_level = 0.0
+Num_search = [40, 10]
+step_orig = [1, 0.01]
 # normal_baseline = np.random.normal(size=(1, 20))*300
 normal_baseline = np.array([[-235.25094786, -427.79160933, 36.37235105, 54.3278281, -87.27348344,
                              25.31470275, 201.85998322, 92.22902115, 244.66603228, -89.80792772,
@@ -17,6 +20,27 @@ time_range = np.arange(1, 21, 1).reshape(1, 20)
 # phase_obsearvation simulate
 phase_orig = sim_arc_phase(v_orig, h_orig, noise_level,
                            time_range, normal_baseline)
+phase_obs = phase_orig[0].T
+v2ph = phase_orig[1].T
+h2ph = phase_orig[2].T
+
+h_search = search_parm_solution(step_orig[0], Num_search[0], h2ph)[0]
+v_search = search_parm_solution(step_orig[1], Num_search[1], v2ph)[0]
+
+# num_phase = [20, 120]
+num_phase = [10, 40]
+phase_model = model_phase(v_search, h_search, num_phase)
+best_coh = sim_temporal_coh(phase_obs, phase_model)
+index = maximum_coh(best_coh[0], num_phase)
+print(h_search.shape)
+print(v_search.shape)
+# print(phase_obs)
+print(phase_model.shape)
+print(best_coh)
+print(index)
+
+
+# print(sim_phase_noise(0.1))
 # print(normal_baseline)
 # print(time_range)
 # print(phase_orig)
