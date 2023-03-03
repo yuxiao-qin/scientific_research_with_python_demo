@@ -26,8 +26,7 @@ def test_h2phase():
 
 def test_generate_phase_noise():
     simulated_noise_level = 1.0
-    actual_noise = generate_phase_noise(simulated_noise_level)
-    assert actual_noise.shape == (1, 30) and (abs(np.mean(actual_noise) - 0.0) < 0.3) and (abs(np.var(actual_noise) - 1.0) < 0.3)
+    TOLERANCE = 0.3
+    actual_noise, NOISE_LENGTH = generate_phase_noise(simulated_noise_level)
+    assert actual_noise.shape == (1, NOISE_LENGTH) and (abs(np.mean(actual_noise)) < TOLERANCE) and (abs(np.var(actual_noise) - simulated_noise_level) < TOLERANCE)
 
-def test_construct_simulated_arc_phase():
-    pass
