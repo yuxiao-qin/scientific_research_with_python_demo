@@ -27,6 +27,7 @@ def test_h2phase():
 def test_generate_phase_noise():
     simulated_noise_level = 1.0
     TOLERANCE = 0.3
-    actual_noise, NOISE_LENGTH = generate_phase_noise(simulated_noise_level)
-    assert actual_noise.shape == (1, NOISE_LENGTH) and (abs(np.mean(actual_noise)) < TOLERANCE) and (abs(np.var(actual_noise) - simulated_noise_level) < TOLERANCE)
+    noise_length = 30
+    actual_noise = generate_phase_noise(simulated_noise_level, noise_length)
+    assert actual_noise.shape == (1, noise_length) and (abs(np.mean(actual_noise)) < TOLERANCE) and (abs(np.var(actual_noise) - simulated_noise_level) < TOLERANCE)
 

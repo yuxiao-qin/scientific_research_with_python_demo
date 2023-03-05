@@ -30,10 +30,9 @@ def h2phase(h:float, normal_baseline_range:np.ndarray=np.arange(0, 600, 20))->np
     distance = h * normal_baseline_range / (R0 * np.sin(INCIDENCE_ANGLE * np.pi / 180)) # [unit:m]
     return distance * 4 * np.pi / WAVELENGTH  # [unit:rad]
 
-def generate_phase_noise(noise_level:float)->np.ndarray:
-    NOISE_LENGTH = 30
-    noise = np.random.normal(loc=0.0, scale=noise_level, size=(1, NOISE_LENGTH))
-    return noise, NOISE_LENGTH
+def generate_phase_noise(noise_level:float, noise_length:int = 30)->np.ndarray:
+    noise = np.random.normal(loc=0.0, scale=noise_level, size=(1, noise_length))
+    return noise
 
 
 
