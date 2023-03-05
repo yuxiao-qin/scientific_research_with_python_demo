@@ -1,4 +1,4 @@
-from main import v2phase, h2phase, sim_phase_noise, sim_arc_phase, search_parm_solution, sim_temporal_coh, model_phase, maximum_coh
+from main import sim_arc_phase, periodogram, search_parm_solution, model_phase, maximum_coh, sim_temporal_coh
 import numpy as np
 import sys
 sys .path.append(
@@ -10,7 +10,8 @@ h_orig = 30  # [m]
 noise_level = 0.0
 Num_search = [40, 10]
 step_orig = [1, 0.01]
-# normal_baseline = np.random.normal(size=(1, 20))*300
+param_orig = [0, 0]
+## normal_baseline = np.random.normal(size=(1, 20))*300
 normal_baseline = np.array([[-235.25094786, -427.79160933, 36.37235105, 54.3278281, -87.27348344,
                              25.31470275, 201.85998322, 92.22902115, 244.66603228, -89.80792772,
                              12.17022031, -23.71273067, -241.58736045, -184.03477855, - 15.97933883,
@@ -23,18 +24,29 @@ phase_orig = sim_arc_phase(v_orig, h_orig, noise_level,
 phase_obs = phase_orig[0].T
 v2ph = phase_orig[1].T
 h2ph = phase_orig[2].T
+count = 0
+# while count <= 10:
+#     param = periodogram(v2ph, h2ph, phase_obs,
+#                         Num_search, step_orig, param_orig)
+#     param_orig = param
+#     step_orig = step_orig*0.1
+#     count += 1
 
-h_search = search_parm_solution(step_orig[0], Num_search[0], h2ph)[0]
-v_search = search_parm_solution(step_orig[1], Num_search[1], v2ph)[0]
+print(len(param_orig))
+
+h_search = search_parm_solution(
+    step_orig[0], Num_search[0], h2ph, param_orig[0])[0]
+v_search = search_parm_solution(
+    step_orig[1], Num_search[1], v2ph, param_orig[1])[0]
 
 # num_phase = [20, 120]
-num_phase = [10, 40]
+# num_phase = [20, 80]
 phase_model = model_phase(v_search, h_search, num_phase)
 best_coh = sim_temporal_coh(phase_obs, phase_model)
 index = maximum_coh(best_coh[0], num_phase)
 print(h_search.shape)
 print(v_search.shape)
-# print(phase_obs)
+print(phase_obs)
 print(phase_model.shape)
 print(best_coh)
 print(index)

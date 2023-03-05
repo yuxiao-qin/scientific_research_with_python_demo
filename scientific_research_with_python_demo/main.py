@@ -103,7 +103,7 @@ def sim_phase_noise(noise_level: float) -> np.ndarray:
     return noise
 
 
-def search_parm_solution(step: float, Nsearch, A_matrix) -> np.ndarray:
+def search_parm_solution(step: float, Nsearch, A_matrix, param_orig) -> np.ndarray:
     """
     construct ohase space based on a range of pamrameters we guess:
 
@@ -119,8 +119,9 @@ def search_parm_solution(step: float, Nsearch, A_matrix) -> np.ndarray:
     output: Search_phase
 
     """
-    # parm_space = np.mat(np.arange(-Nsearch*step, Nsearch*step, step))
-    parm_space = np.mat(np.arange(0, Nsearch*step, step))
+    parm_space = np.mat(np.arange(param_orig-Nsearch*step,
+                        param_orig+Nsearch*step, step))
+    # parm_space = np.mat(np.arange(0, Nsearch*step, step))
     phase_space = np.dot(A_matrix, parm_space)
 
     return phase_space, parm_space
@@ -202,24 +203,25 @@ def maximum_coh(coh_t, num_search):
 
     return best, best_index, param_index, best_cot
 
-# v_orig = 0.01
-# h_orig = [10]*20+np.random.normal(loc=0, scale=1, size=(1, 20))
-# noise_level = 0.1
-# phase_unwrapped = construct_simulated_arc_phase(v_orig, h_orig, noise_level).T
-# print(h_orig)
-# print(h2phase(h_orig))
-# print(wrap_phase(phase_unwrapped))
-# print(generate_phase_noise(0.1))
-# def estimate_parameters(constructed_simulated_phase):
-#     # TODO: implement this function
-#     return est_dv, est_dh
-# a = h2phase(40)[0]
-# print(a)
-# print(h2phase(40)[0].shape)
-# simuated_v = 0.1 * WAVELENGTH  # [unit:m/yr]
-# simuated_time_range = np.arange(1, 21, 1).reshape(1, 20) * 365 / 12
-# print(type(v2phase(simuated_v, simuated_time_range)))
-# print(simuated_time_range)
-# print(np.array(np.linspace(1, 20, 20) * 0.1 * 4 * np.pi))
-# parm = [parm[0]+(a[0]-(Nsearch[0]))*step[0],
-#         parm[1]+(a[1]-(Nsearch[1]))*step[1]]
+
+def compute_param(param_index, step, param_orig, num_search):
+    param = param_orig+(param_index+1-num_search)*step
+    return param
+
+
+def periodogram(v2ph, h2ph, phase_obs, Num_search, step_orig, param_orig):
+
+    v_search = search_parm_solution(
+        step_orig[1], Num_search[1], v2ph, param_orig[1])[0]
+    h_search = search_parm_solution(
+        step_orig[0], Num_search[0], h2ph,  param_orig[0])[0]
+    search_size = [Num_search[1]*2, Num_search[0]*2]
+    phase_model = model_phase(v_search, h_search, search_size)
+    best_coh = sim_temporal_coh(phase_obs, phase_model)
+    index = maximum_coh(best_coh[0], search_size)
+    param_h = compute_param(
+        index[1], step_orig[0], param_orig[0], search_size[1])
+    param_v = compute_param(
+        index[0], step_orig[1], param_orig[1], search_size[0])
+    param = [param_v, param_h]
+    return param

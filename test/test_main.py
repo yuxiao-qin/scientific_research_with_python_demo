@@ -1,6 +1,6 @@
 import pytest
 import numpy as np
-from scientific_research_with_python_demo.main import v2phase, h2phase, sim_phase_noise, sim_arc_phase, search_parm_solution, sim_temporal_coh, WAVELENGTH, wrap_phase, maximum_coh
+from scientific_research_with_python_demo.main import v2phase, h2phase, sim_phase_noise, sim_arc_phase, search_parm_solution, sim_temporal_coh, WAVELENGTH, wrap_phase, maximum_coh, periodogram
 
 
 def test_v2phase():
@@ -51,8 +51,9 @@ def test_sim_arc_phase():
 
 
 def test_construct_param_search():
+    param_orig = [0, 0]
     Bn = np.mat(np.array([1]*20)).T
-    simulated = search_parm_solution(1, 10, Bn)
+    simulated = search_parm_solution(1, 10, Bn, param_orig[0])[0]
     actual = simulated.shape
     assert actual == (20, 20)
 
@@ -92,3 +93,27 @@ def test_maximum():
     assert best == actual
     assert best_index == 2
     assert para_index == (0, 1)
+
+
+def test_periodogram():
+    v_orig = 0.05  # [mm/year]
+    h_orig = 30  # [m]
+    noise_level = 0.0
+    Num_search = [40, 10]
+    step_orig = [1, 0.01]
+    param_orig = [0, 0]
+    normal_baseline = np.array([[-235.25094786, -427.79160933, 36.37235105, 54.3278281, -87.27348344,
+                                 25.31470275, 201.85998322, 92.22902115, 244.66603228, -89.80792772,
+                                 12.17022031, -23.71273067, -241.58736045, -184.03477855, - 15.97933883,
+                                 -116.39428378, -545.53546226, -298.89492777, -379.2293736, 289.30702061]])
+
+    time_range = np.arange(1, 21, 1).reshape(1, 20)
+    phase_orig = sim_arc_phase(v_orig, h_orig, noise_level,
+                               time_range, normal_baseline)
+    phase_obs = phase_orig[0].T
+    v2ph = phase_orig[1].T
+    h2ph = phase_orig[2].T
+    param = periodogram(v2ph, h2ph, phase_obs,
+                        Num_search, step_orig, param_orig)
+    actual = len(param)
+    assert actual == 2
