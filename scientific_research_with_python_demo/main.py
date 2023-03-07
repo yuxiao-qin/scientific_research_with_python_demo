@@ -1,10 +1,12 @@
 import numpy as np
+import math
 
-# Constant
-WAVELENGTH = 0.0056  # [unit:m]
-H = 780000    # satellite vertical height[m]
-Incidence_angle = 23*np.pi/180    # the local incidence angle
-R = H/np.cos(Incidence_angle)    # range to the master antenna. test
+WAVELENGTH = 0.0056  # [m]
+H = 780000  # [m]
+INCIDENCE_ANGLE = 23 * np.pi / 180  # [radians]
+R = H / math.cos(INCIDENCE_ANGLE)  # Slant range [m]
+
+signal_length = 300
 
 
 def wrap_phase(phase: np.ndarray) -> np.ndarray:
@@ -19,8 +21,42 @@ def wrap_phase(phase: np.ndarray) -> np.ndarray:
     return (phase + np.pi) % (2 * np.pi) - np.pi
 
 
-def sim_arc_phase(v: float, h: float, noise_level: float, time_range, normal_baseline: float) -> np.ndarray:
-    """ 
+def get_v2ph_coef(
+    temporal_baseline: np.ndarray = np.arange(signal_length) * 12 / 365,
+) -> np.ndarray:
+    return 4 * np.pi * temporal_baseline / WAVELENGTH
+
+
+def v2phase(v: float, v2ph_coef: np.ndarray) -> np.ndarray:
+    return v * v2ph_coef
+
+
+def get_h2ph_coef(
+    normal_baseline: np.ndarray = np.random.randint(0, 200, size=signal_length)
+) -> np.ndarray:
+    return 4 * np.pi * normal_baseline / (R * WAVELENGTH * np.sin(INCIDENCE_ANGLE))
+
+
+def h2phase(h: float, h2phase_coef: np.ndarray) -> np.ndarray:
+    return h * h2phase_coef
+
+
+def noise2phase(noise_level: float) -> np.ndarray:
+    return np.random.uniform(0, noise_level, signal_length) * (4 * np.pi / 180)
+
+
+def generate_phase_noise(noise_level: float, noise_length: int = 30) -> np.ndarray:
+    return np.random.normal(loc=0.0, scale=noise_level, size=(1, noise_length))
+
+
+def sim_arc_phase(
+    v: float,
+    h: float,
+    noise_level: float,
+    temporal_baseline: np.ndarray,
+    normal_baseline: np.ndarray,
+) -> np.ndarray:
+    """
     simulate phase of arc between two points based on a module(topographic_height + linear_deformation)
 
     input:  v: defomation rate per year
@@ -32,75 +68,11 @@ def sim_arc_phase(v: float, h: float, noise_level: float, time_range, normal_bas
     output: arc_phase: simulated observation phases = topographic_phase + deformation_phase + nosie
 
     """
-    v_phase = v2phase(v, time_range)[0]
-    h_phase = h2phase(h, normal_baseline)[0]
-    v2ph = v2phase(v, time_range)[1]
-    h2ph = h2phase(h, normal_baseline)[0]
-    noise_phase = sim_phase_noise(noise_level)
-    arc_phase = wrap_phase(v_phase + h_phase + noise_phase)
+    phase_displacement = v2phase(v, get_v2ph_coef(temporal_baseline))
+    phase_height = h2phase(h, get_h2ph_coef(normal_baseline))
+    phase_noise = noise2phase(noise_level)
 
-    return arc_phase, v2ph, h2ph
-
-
-def v2phase(v: float, time_range) -> np.ndarray:
-    """
-    Calculate phase difference from velocity difference (of two points).
-
-    input: 
-    v:defomation rate
-    time_range:the factor to caclulate temporal baseline
-
-    output: 
-    v2phase_coefficeint: temopral baseline
-    v2phase_coefficeint*v: deformation_phase
-
-    """
-    temporal_baseline = 12  # [unit:d]
-    temporal_samples = temporal_baseline*time_range
-    # distance = velocity * days (convert from d to yr because velocity is in m/yr)
-    v2phase_coefficeint = 4 * np.pi * temporal_samples / (WAVELENGTH*365)
-
-    return v2phase_coefficeint*v, v2phase_coefficeint  # [unit:rad]
-
-
-def h2phase(h: float, normal_baseline: float) -> np.ndarray:
-    """
-    Calculate phase difference from topographic height (of two points)
-
-    Input: height per acr
-           normal_baseline : perpendicular baseline[unit:m]
-
-    output:
-    h2ph_coefficient: height-to-phase conversion factor
-    h2ph_coefficient*h: Topographic phase
-
-    """
-
-    # normal_baseline = np.random.normal(size=(1, 20))*300
-    # error of perpendicular baseline
-    # baseline_erro = np.random.rand(1, 20)
-    # err_baseline = normal_baseline+baseline_erro
-    # compute height-to-phase conversion factor
-    h2ph_coefficient = 4*np.pi*normal_baseline / \
-        (WAVELENGTH*R*np.sin(Incidence_angle))
-
-    return h2ph_coefficient*h, h2ph_coefficient
-
-
-def sim_phase_noise(noise_level: float) -> np.ndarray:
-    """ 
-    simulate phase noise based on constant noise level
-
-    input: noise_level
-
-    output: noise
-
-    """
-    noise = np.random.uniform(0, noise_level, 20)*(4*np.pi/180)
-    # noise = np.random.normal(loc=0.0, scale=noise_level,
-    #                          size=(1, 20))*(4*np.pi/180)
-
-    return noise
+    return wrap_phase(phase_displacement + phase_height + phase_noise)
 
 
 def search_parm_solution(step: float, Nsearch, A_matrix, param_orig) -> np.ndarray:
@@ -108,10 +80,10 @@ def search_parm_solution(step: float, Nsearch, A_matrix, param_orig) -> np.ndarr
     construct ohase space based on a range of pamrameters we guess:
 
     step1: creat parameters search space based on  a particular step 、
-              search number(range) and orignal parameters 
+              search number(range) and orignal parameters
     step2: caculate param-related phase space such as deformation phase and topographic-height phase
 
-    input: 
+    input:
     step:  step for search parameters
     2*Nsearch :  number of paramters we can search
     A_matrix :  design matrix concluding temporal or spacial baselines
@@ -119,10 +91,11 @@ def search_parm_solution(step: float, Nsearch, A_matrix, param_orig) -> np.ndarr
     output: Search_phase
 
     """
-    parm_space = np.mat(np.arange(param_orig-Nsearch*step,
-                        param_orig+Nsearch*step, step))
+    parm_space = np.mat(
+        np.arange(param_orig - Nsearch * step, param_orig + Nsearch * step, step)
+    )
     # parm_space = np.mat(np.arange(0, Nsearch*step, step))
-    phase_space = np.dot(A_matrix, parm_space)
+    phase_space = A_matrix @ parm_space
 
     return phase_space, parm_space
 
@@ -133,20 +106,20 @@ def model_phase(search_phase1, search_phase2, num_serach) -> np.ndarray:
     which is the phase of a number of interferograms phase per arc.
     -----------------------------------------------------------------------------------
     Since we have a range of parameter v and another range of paramters h every iteration,
-    we have got phase_height and phase_v whose dimension 
+    we have got phase_height and phase_v whose dimension
     related to its 'number of search solution'.
-    In this case , we have to get a combination of phase based on each v and h 
+    In this case , we have to get a combination of phase based on each v and h
     based on 'The multiplication principle of permutations and combinations'
 
-    For example, we get a range of  parameter v (dimension: 1*num_search_v) 
+    For example, we get a range of  parameter v (dimension: 1*num_search_v)
     and a range of parameter  h (dimension: 1*num_search_h)
     In one case , we can have a combination of (v,h) (dimension: num_search_v*num_search_h)
 
     Since we have 'Number of ifg (Nifg)' interferograms, each parmamters will have Nifg phases.
-    Then , we get get a range of phase based parameter's pair (v,h) 
+    Then , we get get a range of phase based parameter's pair (v,h)
     named φ_model (dimension: Nifg*(num_search_v*num_search_v)
     ---------------------------------------------------------------------------------
-    In our case , we can firtsly computer phase 
+    In our case , we can firtsly computer phase
     based on a range of paramters of Nifg interferograms
     φ_height(dimension:Nifg*num_search_h),
     φ_v(dimension:Nifg*num_search_v).
@@ -155,13 +128,13 @@ def model_phase(search_phase1, search_phase2, num_serach) -> np.ndarray:
     φ_model (dimension: Nifg*(num_search_v*num_search_v)
     Kronecker product is introduced in our case,
     we use 'kron' to extend dimension of φ_height or φ_v to
-    dimension(Nifg*(num_search_v*num_search_v)) 
+    dimension(Nifg*(num_search_v*num_search_v))
     and then get add φ_model by adding extended φ_height and φ_v.
     ---------------------------------------------------------------------------------
     display model_phase(3-dimesion:num_v,num_h,num_ifg)
 
-    input: 
-    search_phase1 : v_phase solution space 
+    input:
+    search_phase1 : v_phase solution space
     search_phase2 : h_phase solution space
     num_search : the numbers of parameters we search
 
@@ -170,24 +143,25 @@ def model_phase(search_phase1, search_phase2, num_serach) -> np.ndarray:
 
     """
 
-    search_space = np.kron(search_phase1, np.ones(
-        (1, num_serach[1])))+np.kron(np.ones((1, num_serach[0])), search_phase2)
+    search_space = np.kron(search_phase1, np.ones((1, num_serach[1]))) + np.kron(
+        np.ones((1, num_serach[0])), search_phase2
+    )
 
     return search_space
 
 
 def sim_temporal_coh(arc_phase, search_space):
     """caclulate temporal coherence per arc and
-       input: arc_phase: simulated observation phases 
-              search_space: model phase
+    input: arc_phase: simulated observation phases
+           search_space: model phase
 
-       output: coh_t : temporal coherence
+    output: coh_t : temporal coherence
     """
     search_size = search_space.shape[1]
-    coh_phase = arc_phase*np.ones((1, search_size))-search_space
+    coh_phase = arc_phase * np.ones((1, search_size)) - search_space
     # resdual_phase = phase_observation - phase_model
     size_c = coh_phase.shape
-    coh_t = np.sum(np.exp(1j*coh_phase), axis=0)
+    coh_t = np.sum(np.exp(1j * coh_phase), axis=0)
     size_t = coh_t.shape
     # coherence = (1/Nifg)*Σexp(j*resdual_phase)
 
@@ -199,38 +173,20 @@ def maximum_coh(coh_t, num_search):
     best_index = np.argmax(coh_t)
     best_cot = coh_t[:, best_index]
     param_index = np.unravel_index(
-        best_index, (num_search[0], num_search[1]), order="F")
+        best_index, (num_search[0], num_search[1]), order="F"
+    )
 
     return best, best_index, param_index, best_cot
 
-def h2phase(h:float, normal_baseline_range:np.ndarray=np.arange(0, 600, 20))->np.ndarray:
-    """Calculate phase difference from height difference (of two points).
-    """
-    distance = h * normal_baseline_range / (R0 * np.sin(INCIDENCE_ANGLE * np.pi / 180)) # [unit:m]
-    return distance * 4 * np.pi / WAVELENGTH  # [unit:rad]
-
-def generate_phase_noise(noise_level:float, noise_length:int = 30)->np.ndarray:
-    noise = np.random.normal(loc=0.0, scale=noise_level, size=(1, noise_length))
-    return noise
-
-
-
-
-
 
 def periodogram(v2ph, h2ph, phase_obs, Num_search, step_orig, param_orig):
-
-    v_search = search_parm_solution(
-        step_orig[1], Num_search[1], v2ph, param_orig[1])[0]
-    h_search = search_parm_solution(
-        step_orig[0], Num_search[0], h2ph,  param_orig[0])[0]
-    search_size = [Num_search[1]*2, Num_search[0]*2]
+    v_search = search_parm_solution(step_orig[1], Num_search[1], v2ph, param_orig[1])[0]
+    h_search = search_parm_solution(step_orig[0], Num_search[0], h2ph, param_orig[0])[0]
+    search_size = [Num_search[1] * 2, Num_search[0] * 2]
     phase_model = model_phase(v_search, h_search, search_size)
     best_coh = sim_temporal_coh(phase_obs, phase_model)
     index = maximum_coh(best_coh[0], search_size)
-    param_h = compute_param(
-        index[1], step_orig[0], param_orig[0], search_size[1])
-    param_v = compute_param(
-        index[0], step_orig[1], param_orig[1], search_size[0])
+    param_h = compute_param(index[1], step_orig[0], param_orig[0], search_size[1])
+    param_v = compute_param(index[0], step_orig[1], param_orig[1], search_size[0])
     param = [param_v, param_h]
     return param

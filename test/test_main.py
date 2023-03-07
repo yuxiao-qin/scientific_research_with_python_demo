@@ -1,29 +1,24 @@
 import pytest
 import numpy as np
-from scientific_research_with_python_demo.main import v2phase, h2phase, sim_phase_noise, sim_arc_phase, search_parm_solution, sim_temporal_coh, WAVELENGTH, wrap_phase, maximum_coh, periodogram
-from scientific_research_with_python_demo.main import v2phase, h2phase, WAVELENGTH, R0, INCIDENCE_ANGLE, generate_phase_noise, construct_simulated_arc_phase
+import scientific_research_with_python_demo.main as srwpd
 
 
 def test_v2phase():
     # construct a simulated case
-    simuated_v = 0.1 * WAVELENGTH  # [unit:m/yr]
-    simuated_time_range = np.arange(1, 21, 1).reshape(1, 20) * 365 / 12
-    actual = v2phase(simuated_v, simuated_time_range)[0]
-    # desired phase is calculated by hand
-    desired = np.arange(1, 21, 1).reshape(1, 20) * 0.1 * 4 * np.pi
+    v = 0.1   # [unit:m/yr]
+    temporal_baseline = np.arange(20)
+    actual = srwpd.v2phase(v, srwpd.get_v2ph_coef(temporal_baseline))
+    desired = np.arange(20) * 0.1 * 4 * np.pi / srwpd.WAVELENGTH
     assert np.isclose(actual, desired).all()
 
 
 def test_h2phase():
-    # actual=h2phase(simulated_h)
-    normal_baseline = np.random.normal(size=(1, 20))*300
-    actual = h2phase(40, normal_baseline)[0]
-    assert actual.shape == (1, 20)
-
-
-def test_generate_phase_noise():
-    noise = sim_phase_noise(0.1)
-    assert noise.shape == (1, 20)
+    # construct a simulated case
+    h = 0.1 * srwpd.WAVELENGTH # [unit:m]
+    normal_baseline = np.array([0,1,2]) * srwpd.R * np.sin(srwpd.INCIDENCE_ANGLE)
+    actual = srwpd.h2phase(h, srwpd.get_h2ph_coef(normal_baseline))
+    desired = np.array([0.0, 0.1, 0.2]) * 4 * np.pi
+    assert np.isclose(actual, desired).all()
 
 
 def test_wrap_phase():
@@ -43,7 +38,7 @@ def test_sim_arc_phase():
                                  -116.39428378, -545.53546226, -298.89492777, -379.2293736, 289.30702061]])
 
     simulated = sim_arc_phase(
-        v_orig, h_orig, noise_level, time_range, normal_baseline)[0]
+        v_orig, h_orig, noise_level, time_range, normal_baseline)
     actual = np.array([[-0.16197983, 2.07703957, -0.38777374,  0.6686454,  0.69867534, 2.14699018,
                         -2.25000165, -2.00269921, 1.26480047, -0.22241084, -0.93141071, 1.744535,
                         -1.16754325, 1.65687907, 1.8168527, -2.34515856, 2.05190303, -0.65915225,
@@ -119,16 +114,6 @@ def test_periodogram():
     actual = len(param)
     assert actual == 2
 
-
-def test_h2phase():
-    # construct a simulated case
-    simuated_h = 0.1 * WAVELENGTH # [unit:m]
-    simuated_normal_baseline_range = np.array([0,1,2]) * R0 * np.sin(INCIDENCE_ANGLE * np.pi / 180)
-    actual = h2phase(simuated_h, simuated_normal_baseline_range)
-    # desired phase is calculated by hand
-    desired = np.array([0.0, 0.1, 0.2]) * 4 * np.pi
-
-    assert np.isclose(actual, desired).all()
 
 def test_generate_phase_noise():
     simulated_noise_level = 1.0
