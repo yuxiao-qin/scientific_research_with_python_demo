@@ -8,19 +8,12 @@ R = H/np.cos(Incidence_angle)    # range to the master antenna. test
 
 
 def wrap_phase(phase: np.ndarray) -> np.ndarray:
-    """
-    wrap phase to [-pi,pi]
 
-    input: phase
-
-    output:wrap_phase
-
-    """
     return (phase + np.pi) % (2 * np.pi) - np.pi
 
 
-def sim_arc_phase(v: float, h: float, noise_level: float, time_range, normal_baseline: float) -> np.ndarray:
-    """ 
+def sim_arc_phase(v: float, h: float, noise_level: float, temporal_baseline, normal_baseline: float) -> np.ndarray:
+    """
     simulate phase of arc between two points based on a module(topographic_height + linear_deformation)
 
     input:  v: defomation rate per year
@@ -32,25 +25,29 @@ def sim_arc_phase(v: float, h: float, noise_level: float, time_range, normal_bas
     output: arc_phase: simulated observation phases = topographic_phase + deformation_phase + nosie
 
     """
-    v_phase = v2phase(v, time_range)[0]
-    h_phase = h2phase(h, normal_baseline)[0]
-    v2ph = v2phase(v, time_range)[1]
-    h2ph = h2phase(h, normal_baseline)[0]
+    v2phase_coef = v2phase_coef(temporal_baseline)
+    h2phase_coef = h2phase_coef(normal_baseline)
+
+    v_phase = coef2phase(v2phase_coef, v)
+    h_phase = coef2phase(h2phase_coef, h)
+
+    vphase, vcoef = velocity2phase_and_coef(v, time_range)
+    h_phase, h2ph = h2phase(h, normal_baseline)
+
     noise_phase = sim_phase_noise(noise_level)
     arc_phase = wrap_phase(v_phase + h_phase + noise_phase)
 
     return arc_phase, v2ph, h2ph
 
-
-def v2phase(v: float, time_range) -> np.ndarray:
+def v2phase_coef(time_range) -> np.ndarray:
     """
     Calculate phase difference from velocity difference (of two points).
 
-    input: 
+    input:
     v:defomation rate
     time_range:the factor to caclulate temporal baseline
 
-    output: 
+    output:
     v2phase_coefficeint: temopral baseline
     v2phase_coefficeint*v: deformation_phase
 
@@ -60,10 +57,9 @@ def v2phase(v: float, time_range) -> np.ndarray:
     # distance = velocity * days (convert from d to yr because velocity is in m/yr)
     v2phase_coefficeint = 4 * np.pi * temporal_samples / (WAVELENGTH*365)
 
-    return v2phase_coefficeint*v, v2phase_coefficeint  # [unit:rad]
+    return v2phase_coefficeint  # [unit:rad]
 
-
-def h2phase(h: float, normal_baseline: float) -> np.ndarray:
+def h2phase_coef(h: float, normal_baseline: float) -> np.ndarray:
     """
     Calculate phase difference from topographic height (of two points)
 
@@ -84,11 +80,17 @@ def h2phase(h: float, normal_baseline: float) -> np.ndarray:
     h2ph_coefficient = 4*np.pi*normal_baseline / \
         (WAVELENGTH*R*np.sin(Incidence_angle))
 
-    return h2ph_coefficient*h, h2ph_coefficient
+    return h2ph_coefficient
+
+def coef2phase(coef, param):
+    """This is a function to convert h2phase_coef() and v2phase_coef() to phase
+    with a given parameter, e.g. v or h.
+    """
+    return coef * param
 
 
 def sim_phase_noise(noise_level: float) -> np.ndarray:
-    """ 
+    """
     simulate phase noise based on constant noise level
 
     input: noise_level
@@ -108,10 +110,10 @@ def search_parm_solution(step: float, Nsearch, A_matrix, param_orig) -> np.ndarr
     construct ohase space based on a range of pamrameters we guess:
 
     step1: creat parameters search space based on  a particular step 、
-              search number(range) and orignal parameters 
+              search number(range) and orignal parameters
     step2: caculate param-related phase space such as deformation phase and topographic-height phase
 
-    input: 
+    input:
     step:  step for search parameters
     2*Nsearch :  number of paramters we can search
     A_matrix :  design matrix concluding temporal or spacial baselines
@@ -123,7 +125,6 @@ def search_parm_solution(step: float, Nsearch, A_matrix, param_orig) -> np.ndarr
                         param_orig+Nsearch*step, step))
     # parm_space = np.mat(np.arange(0, Nsearch*step, step))
     phase_space = np.dot(A_matrix, parm_space)
-
     return phase_space, parm_space
 
 
@@ -133,20 +134,20 @@ def model_phase(search_phase1, search_phase2, num_serach) -> np.ndarray:
     which is the phase of a number of interferograms phase per arc.
     -----------------------------------------------------------------------------------
     Since we have a range of parameter v and another range of paramters h every iteration,
-    we have got phase_height and phase_v whose dimension 
+    we have got phase_height and phase_v whose dimension
     related to its 'number of search solution'.
-    In this case , we have to get a combination of phase based on each v and h 
+    In this case , we have to get a combination of phase based on each v and h
     based on 'The multiplication principle of permutations and combinations'
 
-    For example, we get a range of  parameter v (dimension: 1*num_search_v) 
+    For example, we get a range of  parameter v (dimension: 1*num_search_v)
     and a range of parameter  h (dimension: 1*num_search_h)
     In one case , we can have a combination of (v,h) (dimension: num_search_v*num_search_h)
 
     Since we have 'Number of ifg (Nifg)' interferograms, each parmamters will have Nifg phases.
-    Then , we get get a range of phase based parameter's pair (v,h) 
+    Then , we get get a range of phase based parameter's pair (v,h)
     named φ_model (dimension: Nifg*(num_search_v*num_search_v)
     ---------------------------------------------------------------------------------
-    In our case , we can firtsly computer phase 
+    In our case , we can firtsly computer phase
     based on a range of paramters of Nifg interferograms
     φ_height(dimension:Nifg*num_search_h),
     φ_v(dimension:Nifg*num_search_v).
@@ -155,13 +156,13 @@ def model_phase(search_phase1, search_phase2, num_serach) -> np.ndarray:
     φ_model (dimension: Nifg*(num_search_v*num_search_v)
     Kronecker product is introduced in our case,
     we use 'kron' to extend dimension of φ_height or φ_v to
-    dimension(Nifg*(num_search_v*num_search_v)) 
+    dimension(Nifg*(num_search_v*num_search_v))
     and then get add φ_model by adding extended φ_height and φ_v.
     ---------------------------------------------------------------------------------
     display model_phase(3-dimesion:num_v,num_h,num_ifg)
 
-    input: 
-    search_phase1 : v_phase solution space 
+    input:
+    search_phase1 : v_phase solution space
     search_phase2 : h_phase solution space
     num_search : the numbers of parameters we search
 
@@ -178,7 +179,7 @@ def model_phase(search_phase1, search_phase2, num_serach) -> np.ndarray:
 
 def sim_temporal_coh(arc_phase, search_space):
     """caclulate temporal coherence per arc and
-       input: arc_phase: simulated observation phases 
+       input: arc_phase: simulated observation phases
               search_space: model phase
 
        output: coh_t : temporal coherence

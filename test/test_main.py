@@ -1,14 +1,13 @@
 import pytest
 import numpy as np
-from scientific_research_with_python_demo.main import v2phase, h2phase, sim_phase_noise, sim_arc_phase, search_parm_solution, sim_temporal_coh, WAVELENGTH, wrap_phase, maximum_coh, periodogram
-from scientific_research_with_python_demo.main import v2phase, h2phase, WAVELENGTH, R0, INCIDENCE_ANGLE, generate_phase_noise, construct_simulated_arc_phase
+import scientific_research_with_python_demo.main as srwpd
 
 
 def test_v2phase():
     # construct a simulated case
-    simuated_v = 0.1 * WAVELENGTH  # [unit:m/yr]
+    simuated_v = 0.1 * srwpd.WAVELENGTH  # [unit:m/yr]
     simuated_time_range = np.arange(1, 21, 1).reshape(1, 20) * 365 / 12
-    actual = v2phase(simuated_v, simuated_time_range)[0]
+    actual = srwpd.v2phase(simuated_v, simuated_time_range)[0]
     # desired phase is calculated by hand
     desired = np.arange(1, 21, 1).reshape(1, 20) * 0.1 * 4 * np.pi
     assert np.isclose(actual, desired).all()
@@ -17,7 +16,7 @@ def test_v2phase():
 def test_h2phase():
     # actual=h2phase(simulated_h)
     normal_baseline = np.random.normal(size=(1, 20))*300
-    actual = h2phase(40, normal_baseline)[0]
+    actual = srwpd.h2phase(40, normal_baseline)[0]
     assert actual.shape == (1, 20)
 
 
