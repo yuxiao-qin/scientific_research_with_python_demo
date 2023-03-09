@@ -40,7 +40,7 @@ v_search = search_parm_solution(
     step_orig[1], Num_search[1], v2ph, param_orig[1])[0]
 
 # num_phase = [20, 120]
-# num_phase = [20, 80]
+num_phase = [20, 80]
 phase_model = model_phase(v_search, h_search, num_phase)
 best_coh = sim_temporal_coh(phase_obs, phase_model)
 index = maximum_coh(best_coh[0], num_phase)

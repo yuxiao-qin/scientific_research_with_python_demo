@@ -42,49 +42,101 @@ def sim_arc_phase(v: float, h: float, noise_level: float, time_range, normal_bas
     return arc_phase, v2ph, h2ph
 
 
-def v2phase(v: float, time_range) -> np.ndarray:
+def v_coef(time_baseline) -> np.ndarray:
     """
-    Calculate phase difference from velocity difference (of two points).
+    caculate v2phase factor
 
     input: 
-    v:defomation rate
-    time_range:the factor to caclulate temporal baseline
+        time_baseline:the factor to caclulate temporal baseline
 
     output: 
-    v2phase_coefficeint: temopral baseline
-    v2phase_coefficeint*v: deformation_phase
-
+    v2phase_coefficeint: v to phase factors
     """
-    temporal_baseline = 12  # [unit:d]
-    temporal_samples = temporal_baseline*time_range
+    temporal_step = 12  # [unit:d]
+    temporal_samples = temporal_step*time_baseline
     # distance = velocity * days (convert from d to yr because velocity is in m/yr)
     v2phase_coefficeint = 4 * np.pi * temporal_samples / (WAVELENGTH*365)
+    return v2phase_coefficeint
 
-    return v2phase_coefficeint*v, v2phase_coefficeint  # [unit:rad]
 
-
-def h2phase(h: float, normal_baseline: float) -> np.ndarray:
+def h_coef(normal_baseline: float) -> np.ndarray:
     """
-    Calculate phase difference from topographic height (of two points)
+        caculate h2phase factor
 
-    Input: height per acr
-           normal_baseline : perpendicular baseline[unit:m]
+    input: 
+        normal_baseline:the factor to caclulate temporal baseline
 
-    output:
-    h2ph_coefficient: height-to-phase conversion factor
-    h2ph_coefficient*h: Topographic phase
-
+    output: 
+    h2phase_coefficeint: h to phase factors
     """
-
-    # normal_baseline = np.random.normal(size=(1, 20))*300
-    # error of perpendicular baseline
-    # baseline_erro = np.random.rand(1, 20)
-    # err_baseline = normal_baseline+baseline_erro
-    # compute height-to-phase conversion factor
     h2ph_coefficient = 4*np.pi*normal_baseline / \
         (WAVELENGTH*R*np.sin(Incidence_angle))
 
-    return h2ph_coefficient*h, h2ph_coefficient
+    return h2ph_coefficient
+
+
+def coef2phase(coefficeint, param: float) -> np.ndarray:
+    """
+    Calculate phase difference from velocity difference (of two points).
+    and phase difference from topographic height (of two points)
+
+    input:
+        param: v or h
+        coefficeint: v or h to phase factors
+    output:
+        phase_model: difference phases based on v ,h or other paramters
+
+    """
+
+    phase_model = coefficeint*param
+
+    return phase_model
+
+
+# def v2phase(v: float, time_range) -> np.ndarray:
+#     """
+#     Calculate phase difference from velocity difference (of two points).
+
+#     input:
+#     v:defomation rate
+#     time_range:the factor to caclulate temporal baseline
+
+#     output:
+#     v2phase_coefficeint: temopral baseline
+#     v2phase_coefficeint*v: deformation_phase
+
+#     """
+#     temporal_baseline = 12  # [unit:d]
+#     temporal_samples = temporal_baseline*time_range
+#     # distance = velocity * days (convert from d to yr because velocity is in m/yr)
+#     v2phase_coefficeint = 4 * np.pi * temporal_samples / (WAVELENGTH*365)
+
+#     return v2phase_coefficeint*v, v2phase_coefficeint  # [unit:rad]
+
+
+# def h2phase(h: float, normal_baseline: float) -> np.ndarray:
+#     """
+#     Calculate phase difference from topographic height (of two points)
+
+#     Input:
+#         height per acr
+#         ormal_baseline : perpendicular baseline[unit:m]
+
+#     output:
+#         h2ph_coefficient: height-to-phase conversion factor
+#         h2ph_coefficient*h: Topographic phase
+
+#     """
+
+#     # normal_baseline = np.random.normal(size=(1, 20))*300
+#     # error of perpendicular baseline
+#     # baseline_erro = np.random.rand(1, 20)
+#     # err_baseline = normal_baseline+baseline_erro
+#     # compute height-to-phase conversion factor
+#     h2ph_coefficient = 4*np.pi*normal_baseline / \
+#         (WAVELENGTH*R*np.sin(Incidence_angle))
+
+#     return h2ph_coefficient*h, h2ph_coefficient
 
 
 def sim_phase_noise(noise_level: float) -> np.ndarray:
@@ -103,7 +155,23 @@ def sim_phase_noise(noise_level: float) -> np.ndarray:
     return noise
 
 
-def search_parm_solution(step: float, Nsearch, A_matrix, param_orig) -> np.ndarray:
+def param_search(step: float, Nsearch, param_orig):
+    """
+
+    input:
+        step:  step for search parameters
+        2*Nsearch :  number of paramters we can search
+    output:
+        parm_space: paramters serach space
+    """
+
+    parm_space = np.mat(np.arange(param_orig-Nsearch*step,
+                        param_orig+Nsearch*step, step))
+
+    return parm_space
+
+
+def phase_search(coefficeint, param_space) -> np.ndarray:
     """
     construct ohase space based on a range of pamrameters we guess:
 
@@ -119,12 +187,12 @@ def search_parm_solution(step: float, Nsearch, A_matrix, param_orig) -> np.ndarr
     output: Search_phase
 
     """
-    parm_space = np.mat(np.arange(param_orig-Nsearch*step,
-                        param_orig+Nsearch*step, step))
+    # parm_space = np.mat(np.arange(param_orig-Nsearch*step,
+    #                     param_orig+Nsearch*step, step))
     # parm_space = np.mat(np.arange(0, Nsearch*step, step))
-    phase_space = np.dot(A_matrix, parm_space)
+    phase_space = coef2phase(coefficeint, param_space)
 
-    return phase_space, parm_space
+    return phase_space
 
 
 def model_phase(search_phase1, search_phase2, num_serach) -> np.ndarray:
@@ -177,51 +245,116 @@ def model_phase(search_phase1, search_phase2, num_serach) -> np.ndarray:
 
 
 def sim_temporal_coh(arc_phase, search_space):
-    """caclulate temporal coherence per arc and
+    """
+       caclulate temporal coherence per arc 
+       temporal coherence γ=|(1/Nifgs)Σexp(j*(φ0s_obs-φ0s_modle))|
+
        input: arc_phase: simulated observation phases 
               search_space: model phase
 
        output: coh_t : temporal coherence
+
     """
-    search_size = search_space.shape[1]
+    search_size = search_space.shape
     coh_phase = arc_phase*np.ones((1, search_size))-search_space
     # resdual_phase = phase_observation - phase_model
     size_c = coh_phase.shape
-    coh_t = np.sum(np.exp(1j*coh_phase), axis=0)
+    coh_t = np.sum(np.exp(1j*coh_phase), axis=0)/20
     size_t = coh_t.shape
-    # coherence = (1/Nifg)*Σexp(j*resdual_phase)
+    # coherence = γ=|(1/Nifgs)Σexp(j*(φ0s_obs-φ0s_modle))|
 
-    return coh_t, size_c, size_t
+    return coh_t
 
 
-def maximum_coh(coh_t, num_search):
-    best = np.max(coh_t)
+def maximum_coh(coh_t):
+    """
+    search best coh_t of each paramters (v,h) based on several interferograms
+    calculate the chosen (v,h) by converting Linear indexes to subscripts
+    here we used a fuction named "np.unravel_index" to get subscripts
+
+
+    input:
+        coh_t: temporal coherence per arc
+        num_serach: size of serached paramters
+    output:
+        best_coh: the max modulus of coh_t
+        best_index: Linear indexe of best
+        param_index: subscripts of best in the matrix made of searched parameters
+
+
+    """
+    # best_coh = np.max(coh_t)
     best_index = np.argmax(coh_t)
-    best_cot = coh_t[:, best_index]
+    best_coh = coh_t[:, best_index]
+
+    return best_coh, best_index
+
+
+def index2sub(best_index, num_search):
     param_index = np.unravel_index(
         best_index, (num_search[0], num_search[1]), order="F")
 
-    return best, best_index, param_index, best_cot
+    return param_index
 
 
 def compute_param(param_index, step, param_orig, num_search):
+    """
+    compute paramters by using search_num and subscripts
+
+    input:
+        param_index: subscripts of best in the matrix made of searched parameters
+        step: step for search parameters
+        param_orig: the original param after each iterations
+        num_search: size of serached paramters
+
+        output:
+        param: (v,h) of max coherence each iterations
+
+    """
     param = param_orig+(param_index+1-num_search)*step
     return param
 
 
 def periodogram(v2ph, h2ph, phase_obs, Num_search, step_orig, param_orig):
+    """
+    This is a program named "periodogram" 
+    It is an estimator seraching the solution space to find best (v,h),
+    based on (topographic_height+linear_deformation)
+    which maximize the temporal coherence γ
 
-    v_search = search_parm_solution(
-        step_orig[1], Num_search[1], v2ph, param_orig[1])[0]
-    h_search = search_parm_solution(
-        step_orig[0], Num_search[0], h2ph,  param_orig[0])[0]
+    input:
+        v2ph: velocity-to-phase conversion factor
+        h2ph: height-to-phase conversion factor
+        phase_obs: simulated obseravation based on 'topographic_height+linear_deformation+niose'
+        Num_search: size of solution space
+        step_orig: step of searching solution related to parameters
+        param_orig: original paramters (v,h)
+
+    output:
+        param: The parameters generated after each iteration
+
+    The program consists of a number of modules, 
+    which enables users to check and upgrade.
+
+    The modules are:
+
+
+
+
+    """
+
+    v_search = coef2phase(
+        v2ph, param_orig[1])
+    h_search = coef2phase(
+        h2ph,  param_orig[0])
     search_size = [Num_search[1]*2, Num_search[0]*2]
     phase_model = model_phase(v_search, h_search, search_size)
-    best_coh = sim_temporal_coh(phase_obs, phase_model)
-    index = maximum_coh(best_coh[0], search_size)
+    coh_t = sim_temporal_coh(phase_obs, phase_model)
+    best, index = maximum_coh(coh_t)
+    sub = index2sub(index)
     param_h = compute_param(
-        index[1], step_orig[0], param_orig[0], search_size[1])
+        sub[1], step_orig[0], param_orig[0], search_size[1])
     param_v = compute_param(
-        index[0], step_orig[1], param_orig[1], search_size[0])
+        sub[0], step_orig[1], param_orig[1], search_size[0])
     param = [param_v, param_h]
     return param
