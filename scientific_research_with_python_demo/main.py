@@ -19,7 +19,7 @@ def wrap_phase(phase: np.ndarray) -> np.ndarray:
     return (phase + np.pi) % (2 * np.pi) - np.pi
 
 
-def sim_arc_phase(v: float, h: float, noise_level: float, time_range, normal_baseline: float) -> np.ndarray:
+def sim_arc_phase(v: float, h: float, noise_level: float, v2ph, h2ph: float) -> np.ndarray:
     """ 
     simulate phase of arc between two points based on a module(topographic_height + linear_deformation)
 
@@ -32,14 +32,16 @@ def sim_arc_phase(v: float, h: float, noise_level: float, time_range, normal_bas
     output: arc_phase: simulated observation phases = topographic_phase + deformation_phase + nosie
 
     """
-    v_phase = v2phase(v, time_range)[0]
-    h_phase = h2phase(h, normal_baseline)[0]
-    v2ph = v2phase(v, time_range)[1]
-    h2ph = h2phase(h, normal_baseline)[0]
+    # v_phase = v2phase(v, time_range)[0]
+    # h_phase = h2phase(h, normal_baseline)[0]
+    # v2ph = v2phase(v, time_range)[1]
+    # h2ph = h2phase(h, normal_baseline)[0]
+    v_phase = coef2phase(v2ph, v)
+    h_phase = coef2phase(h2ph, h)
     noise_phase = sim_phase_noise(noise_level)
     arc_phase = wrap_phase(v_phase + h_phase + noise_phase)
 
-    return arc_phase, v2ph, h2ph
+    return arc_phase
 
 
 def v_coef(time_baseline) -> np.ndarray:
@@ -68,7 +70,12 @@ def h_coef(normal_baseline: float) -> np.ndarray:
 
     output: 
     h2phase_coefficeint: h to phase factors
+
     """
+    # normal_baseline = np.random.normal(size=(1, 20))*300
+    # error of perpendicular baseline
+    # baseline_erro = np.random.rand(1, 20)
+    # err_baseline = normal_baseline+baseline_erro
     h2ph_coefficient = 4*np.pi*normal_baseline / \
         (WAVELENGTH*R*np.sin(Incidence_angle))
 
@@ -91,52 +98,6 @@ def coef2phase(coefficeint, param: float) -> np.ndarray:
     phase_model = coefficeint*param
 
     return phase_model
-
-
-# def v2phase(v: float, time_range) -> np.ndarray:
-#     """
-#     Calculate phase difference from velocity difference (of two points).
-
-#     input:
-#     v:defomation rate
-#     time_range:the factor to caclulate temporal baseline
-
-#     output:
-#     v2phase_coefficeint: temopral baseline
-#     v2phase_coefficeint*v: deformation_phase
-
-#     """
-#     temporal_baseline = 12  # [unit:d]
-#     temporal_samples = temporal_baseline*time_range
-#     # distance = velocity * days (convert from d to yr because velocity is in m/yr)
-#     v2phase_coefficeint = 4 * np.pi * temporal_samples / (WAVELENGTH*365)
-
-#     return v2phase_coefficeint*v, v2phase_coefficeint  # [unit:rad]
-
-
-# def h2phase(h: float, normal_baseline: float) -> np.ndarray:
-#     """
-#     Calculate phase difference from topographic height (of two points)
-
-#     Input:
-#         height per acr
-#         ormal_baseline : perpendicular baseline[unit:m]
-
-#     output:
-#         h2ph_coefficient: height-to-phase conversion factor
-#         h2ph_coefficient*h: Topographic phase
-
-#     """
-
-#     # normal_baseline = np.random.normal(size=(1, 20))*300
-#     # error of perpendicular baseline
-#     # baseline_erro = np.random.rand(1, 20)
-#     # err_baseline = normal_baseline+baseline_erro
-#     # compute height-to-phase conversion factor
-#     h2ph_coefficient = 4*np.pi*normal_baseline / \
-#         (WAVELENGTH*R*np.sin(Incidence_angle))
-
-#     return h2ph_coefficient*h, h2ph_coefficient
 
 
 def sim_phase_noise(noise_level: float) -> np.ndarray:
@@ -244,7 +205,7 @@ def model_phase(search_phase1, search_phase2, num_serach) -> np.ndarray:
     return search_space
 
 
-def sim_temporal_coh(arc_phase, search_space):
+def sim_temporal_coh(arc_phase, search_space) -> np.ndarray:
     """
        caclulate temporal coherence per arc 
        temporal coherence γ=|(1/Nifgs)Σexp(j*(φ0s_obs-φ0s_modle))|
@@ -255,7 +216,7 @@ def sim_temporal_coh(arc_phase, search_space):
        output: coh_t : temporal coherence
 
     """
-    search_size = search_space.shape
+    search_size = search_space.shape[1]
     coh_phase = arc_phase*np.ones((1, search_size))-search_space
     # resdual_phase = phase_observation - phase_model
     size_c = coh_phase.shape
