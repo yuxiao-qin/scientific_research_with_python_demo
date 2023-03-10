@@ -39,7 +39,8 @@ def sim_arc_phase(v: float, h: float, noise_level: float, v2ph, h2ph: float) -> 
     v_phase = coef2phase(v2ph, v)
     h_phase = coef2phase(h2ph, h)
     noise_phase = sim_phase_noise(noise_level)
-    arc_phase = wrap_phase(v_phase + h_phase + noise_phase)
+    phase_unwrap = v_phase + h_phase + noise_phase
+    arc_phase = wrap_phase(phase_unwrap)
 
     return arc_phase
 
@@ -109,7 +110,7 @@ def sim_phase_noise(noise_level: float) -> np.ndarray:
     output: noise
 
     """
-    noise = np.random.uniform(0, noise_level, 20)*(4*np.pi/180)
+    noise = np.random.uniform(0, noise_level, (20, 1))*(4*np.pi/180)
     # noise = np.random.normal(loc=0.0, scale=noise_level,
     #                          size=(1, 20))*(4*np.pi/180)
 
@@ -126,10 +127,13 @@ def param_search(step: float, Nsearch, param_orig):
         parm_space: paramters serach space
     """
 
-    parm_space = np.mat(np.arange(param_orig-Nsearch*step,
-                        param_orig+Nsearch*step, step))
+    # parm_space = np.mat(np.arange(param_orig-Nsearch*step,
+    #                     param_orig+Nsearch*step, step))
+    min = param_orig-Nsearch*step
+    max = param_orig+Nsearch*step
+    param_space = np.mat(np.linspace(min, max, Nsearch*2))
 
-    return parm_space
+    return param_space
 
 
 def phase_search(coefficeint, param_space) -> np.ndarray:
@@ -276,7 +280,7 @@ def compute_param(param_index, step, param_orig, num_search):
     return param
 
 
-def periodogram(v2ph, h2ph, phase_obs, Num_search, step_orig, param_orig):
+def periodogram(v2ph, h2ph, phase_obs, Num_search, step_orig: float, param_orig):
     """
     This is a program named "periodogram" 
     It is an estimator seraching the solution space to find best (v,h),
@@ -303,19 +307,20 @@ def periodogram(v2ph, h2ph, phase_obs, Num_search, step_orig, param_orig):
 
 
     """
-
-    v_search = coef2phase(
-        v2ph, param_orig[1])
-    h_search = coef2phase(
-        h2ph,  param_orig[0])
+    v_search = param_search(step_orig[1], Num_search[1], param_orig[0])
+    h_serach = param_search(step_orig[0], Num_search[0], param_orig[1])
+    phase_v = coef2phase(
+        v2ph, v_search)
+    phase_h = coef2phase(
+        h2ph,  h_serach)
     search_size = [Num_search[1]*2, Num_search[0]*2]
-    phase_model = model_phase(v_search, h_search, search_size)
+    phase_model = model_phase(phase_v, phase_h, search_size)
     coh_t = sim_temporal_coh(phase_obs, phase_model)
     best, index = maximum_coh(coh_t)
-    sub = index2sub(index)
+    sub = index2sub(index, search_size)
     param_h = compute_param(
-        sub[1], step_orig[0], param_orig[0], search_size[1])
+        sub[1], step_orig[0], param_orig[1], search_size[1])
     param_v = compute_param(
-        sub[0], step_orig[1], param_orig[1], search_size[0])
+        sub[0], step_orig[1], param_orig[0], search_size[0])
     param = [param_v, param_h]
     return param

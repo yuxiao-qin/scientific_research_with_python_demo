@@ -1,35 +1,39 @@
-from main import sim_arc_phase, periodogram, model_phase, maximum_coh, sim_temporal_coh
+import main as af
 import numpy as np
 import sys
 sys .path.append(
     '/data/tests/jiaxing/scientific_research_with_python_demo/scientific_research_with_python_demo')
 # Initialize
 
-# v_orig = 0.05  # [mm/year]
-# h_orig = 30  # [m]
-# noise_level = 0.0
-# Num_search = [40, 10]
-# step_orig = [1, 0.01]
-# param_orig = [0, 0]
-# ## normal_baseline = np.random.normal(size=(1, 20))*300
-# normal_baseline = np.array([[-235.25094786, -427.79160933, 36.37235105, 54.3278281, -87.27348344,
-#                              25.31470275, 201.85998322, 92.22902115, 244.66603228, -89.80792772,
-#                              12.17022031, -23.71273067, -241.58736045, -184.03477855, - 15.97933883,
-#                              -116.39428378, -545.53546226, -298.89492777, -379.2293736, 289.30702061]])
+v_orig = 0.05  # [mm/year]
+h_orig = 30  # [m]
+noise_level = 0.0
+Num_search = np.array([40, 10])
+step_orig = np.array([1.0, 0.01])
+param_orig = np.array([0, 0])
+# normal_baseline = np.random.normal(size=(1, 20))*300
+normal_baseline = np.array([[-235.25094786, -427.79160933, 36.37235105, 54.3278281, -87.27348344,
+                             25.31470275, 201.85998322, 92.22902115, 244.66603228, -89.80792772,
+                             12.17022031, -23.71273067, -241.58736045, -184.03477855, - 15.97933883,
+                             -116.39428378, -545.53546226, -298.89492777, -379.2293736, 289.30702061]])
 
-# time_range = np.arange(1, 21, 1).reshape(1, 20)
+time_baseline = np.arange(1, 21, 1).reshape(1, 20)
+v2ph = af.v_coef(time_baseline).T
+h2ph = af.h_coef(normal_baseline).T
+
 # phase_obsearvation simulate
-# phase_orig = sim_arc_phase(v_orig, h_orig, noise_level,
-#                            time_range, normal_baseline)
-# phase_obs = phase_orig[0].T
-# v2ph = phase_orig[1].T
-# h2ph = phase_orig[2].T
+phase_obs = af.sim_arc_phase(v_orig, h_orig, noise_level, v2ph, h2ph)
+# print(phase_obs)
+param = af.periodogram(v2ph, h2ph, phase_obs,
+                       Num_search, step_orig, param_orig)
+print(param)
 # count = 0
-# while count <= 10:
-#     param = periodogram(v2ph, h2ph, phase_obs,
-#                         Num_search, step_orig, param_orig)
+# while count <= 1:
+#     param = af.periodogram(v2ph, h2ph, phase_obs,
+#                            Num_search, step_orig, param_orig)
 #     param_orig = param
-#     step_orig = step_orig*0.1
+#     step_orig *= 0.1
+#     Num_search = np.array([40, 10])
 #     count += 1
 
 # print(len(param_orig))

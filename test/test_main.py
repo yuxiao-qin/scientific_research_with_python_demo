@@ -113,12 +113,12 @@ def test_periodogram():
                                12.17022031, -23.71273067, -241.58736045, -184.03477855, - 15.97933883,
                                -116.39428378, -545.53546226, -298.89492777, -379.2293736, 289.30702061]])
 
-    time_range = np.arange(1, 21, 1).reshape(1, 20)
-    phase_orig = sim_arc_phase(v_orig, h_orig, noise_level,
-                               time_range, normal_baseline)
-    phase_obs = phase_orig[0].T
-    v2ph = phase_orig[1].T
-    h2ph = phase_orig[2].T
+    time_baseline = np.arange(1, 21, 1).reshape(1, 20)
+    v2ph = v_coef(time_baseline).T
+    h2ph = h_coef(normal_baseline).T
+
+    # phase_obsearvation simulate
+    phase_obs = sim_arc_phase(v_orig, h_orig, noise_level, v2ph, h2ph)
     param = periodogram(v2ph, h2ph, phase_obs,
                         Num_search, step_orig, param_orig)
     actual = len(param)
