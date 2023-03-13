@@ -196,7 +196,7 @@ def model_phase(search_phase1, search_phase2, num_serach) -> np.ndarray:
     input: 
     search_phase1 : v_phase solution space 
     search_phase2 : h_phase solution space
-    num_search : the numbers of parameters we search
+    num_search : the numbers of parameters we search[search_size_h,search_size_h]
 
     output:
     search_pace
@@ -204,7 +204,7 @@ def model_phase(search_phase1, search_phase2, num_serach) -> np.ndarray:
     """
 
     search_space = np.kron(search_phase1, np.ones(
-        (1, num_serach[1])))+np.kron(np.ones((1, num_serach[0])), search_phase2)
+        (1, num_serach[0])))+np.kron(np.ones((1, num_serach[1])), search_phase2)
 
     return search_space
 
@@ -292,8 +292,8 @@ def periodogram(v2ph, h2ph, phase_obs, Num_search, step_orig: float, param_orig)
         h2ph: height-to-phase conversion factor
         phase_obs: simulated obseravation based on 'topographic_height+linear_deformation+niose'
         Num_search: size of solution space
-        step_orig: step of searching solution related to parameters
-        param_orig: original paramters (v,h)
+        step_orig: step of searching solution related to parameters[step_h,step_v]
+        param_orig: original paramters (h,v)
 
     output:
         param: The parameters generated after each iteration
@@ -307,20 +307,23 @@ def periodogram(v2ph, h2ph, phase_obs, Num_search, step_orig: float, param_orig)
 
 
     """
-    v_search = param_search(step_orig[1], Num_search[1], param_orig[0])
-    h_serach = param_search(step_orig[0], Num_search[0], param_orig[1])
-    phase_v = coef2phase(
-        v2ph, v_search)
+    h_serach = param_search(step_orig[0], Num_search[0], param_orig[0])
+    v_search = param_search(step_orig[1], Num_search[1], param_orig[1])
+
     phase_h = coef2phase(
         h2ph,  h_serach)
-    search_size = [Num_search[1]*2, Num_search[0]*2]
+    phase_v = coef2phase(
+        v2ph, v_search)
+    # search_size=[serach_sizeH,serach_sizeH]
+    search_size = [Num_search[0]*2, Num_search[1]*2]
+    # kronecker积
     phase_model = model_phase(phase_v, phase_h, search_size)
     coh_t = sim_temporal_coh(phase_obs, phase_model)
     best, index = maximum_coh(coh_t)
     sub = index2sub(index, search_size)
     param_h = compute_param(
-        sub[1], step_orig[0], param_orig[1], search_size[1])
+        sub[0], step_orig[0], param_orig[0], Num_search[0])
     param_v = compute_param(
-        sub[0], step_orig[1], param_orig[0], search_size[0])
-    param = [param_v, param_h]
+        sub[1], step_orig[1], param_orig[1], Num_search[1])
+    param = [param_h, param_v]
     return param
