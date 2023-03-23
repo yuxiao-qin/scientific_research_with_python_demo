@@ -1,6 +1,15 @@
 import pytest
 import numpy as np
-from scientific_research_with_python_demo.main import v_coef, h_coef, coef2phase, sim_phase_noise, sim_arc_phase, param_search, phase_search, sim_temporal_coh, WAVELENGTH, wrap_phase, maximum_coh, periodogram, Incidence_angle, R, index2sub
+from scientific_research_with_python_demo.main import v_coef, h_coef, coef2phase, sim_phase_noise, sim_arc_phase, param_search, phase_search, sim_temporal_coh, WAVELENGTH, wrap_phase, maximum_coh, periodogram, Incidence_angle, R, index2sub, compute_Nsearch
+
+
+def test_compute_Nsearch():
+    step_orig = np.array([1.0, 0.0001])
+    std_param = np.array([40, 0.03])
+    Num_search1 = compute_Nsearch(std_param[0], step_orig[0])
+    Num_search2 = compute_Nsearch(std_param[1], step_orig[1])
+    assert Num_search1 == 80
+    assert Num_search2 == 600
 
 
 def test_v_coef():
@@ -99,6 +108,22 @@ def test_maximum():
     assert best == actual
     assert best_index == 2
     assert para_index == (0, 1)
+
+
+def test_argmax_complex_number():
+    phase = np.array([[1, 2, 1, -2],
+                      [2, -4, -3, 1],
+                      [3, 5, 2, 3]])
+    coh_exp = np.exp(1j*phase)
+    coh_t = abs(np.sum(coh_exp, axis=0, keepdims=True))
+    best, index = maximum_coh(coh_t)
+    actual = abs(np.exp(1j)+np.exp(2j)+np.exp(3j))
+    data = np.array(
+        [[-0.8658+1.8919j, -0.7861+0.7072j, -0.8658+1.6096j, -0.8658+0.0733j]])
+    a, b = maximum_coh(data)
+    # assert index == 0
+    assert (best == actual).all
+    assert b == 0
 
 
 def test_periodogram():

@@ -5,6 +5,14 @@ WAVELENGTH = 0.0056  # [unit:m]
 H = 780000    # satellite vertical height[m]
 Incidence_angle = 23*np.pi/180    # the local incidence angle
 R = H/np.cos(Incidence_angle)    # range to the master antenna. test
+Nifg = 20
+m2ph = 4 * np.pi/WAVELENGTH
+
+
+def compute_Nsearch(std_param: float, step):
+    Num_search = round(2*std_param/step)
+
+    return Num_search
 
 
 def wrap_phase(phase: np.ndarray) -> np.ndarray:
@@ -23,6 +31,12 @@ def wrap_phase(phase: np.ndarray) -> np.ndarray:
     phase_wrap = (phase + np.pi) % (2 * np.pi) - np.pi
 
     return phase_wrap
+
+
+def unwrap_phase(phase, a_check) -> np.ndarray:
+    phase_unwrap = 2*np.pi*a_check+phase
+
+    return phase_unwrap
 
 
 def sim_arc_phase(v: float, h: float, noise_level: float, v2ph, h2ph: float) -> np.ndarray:
@@ -280,7 +294,7 @@ def sim_temporal_coh(arc_phase, search_space) -> np.ndarray:
     coh_phase = arc_phase*np.ones((1, search_size))-search_space
 
     size_c = coh_phase.shape
-    coh_t = np.sum(np.exp(1j*coh_phase), axis=0)/20
+    coh_t = np.sum(np.exp(1j*coh_phase), axis=0)/Nifg
     size_t = coh_t.shape
     # coherence = γ=|(1/Nifgs)Σexp(j*(φ0s_obs-φ0s_modle))|
 
@@ -318,7 +332,7 @@ def maximum_coh(coh_t):
 
     # """
     # best_coh = np.max(coh_t)
-    best_index = np.argmax(coh_t)
+    best_index = np.argmax(abs(coh_t))
     best_coh = coh_t[:, best_index]
 
     return best_coh, best_index
@@ -370,6 +384,38 @@ def compute_param(param_index, step, param_orig, num_search):
     param = param_orig+(param_index+1-num_search)*step
 
     return param
+
+
+def correct_h2ph(h2ph):
+    mean_h2ph = np.mean(h2ph, axis=0)
+    factors = h2ph/mean_h2ph
+    correct_factor = np.median(factors)
+
+    return correct_factor
+
+
+def ambiguity_phase(v2ph, h2ph, param, best, phase_obs):
+    phase_model = coef2phase(
+        h2ph, param[0])+coef2phase(v2ph, param[1])+np.angle(best)
+    phase_ambiguity = phase_obs-phase_model
+    phase_ambiguity_wrap = wrap_phase(phase_ambiguity)
+
+    return phase_ambiguity_wrap, phase_model
+
+
+def compute_ambiguity(phase_obs, phase_model, phase_ambiguity_wrap):
+    a_check = round((phase_model+phase_ambiguity_wrap-phase_obs)/2*np.pi)
+
+    return a_check
+
+
+def correct_param(A_design, phase_unwrap):
+    N = (A_design.T)*A_design
+    R = np.linalg.cholesky(N)
+    rhs = (R.I)*((R.T).I*A_design.T)
+    param_correct = rhs*phase_unwrap
+
+    return param_correct
 
 
 def periodogram(v2ph, h2ph, phase_obs, Num_search, step_orig: float, param_orig):

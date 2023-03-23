@@ -4,12 +4,16 @@ import sys
 sys .path.append(
     '/data/tests/jiaxing/scientific_research_with_python_demo/scientific_research_with_python_demo')
 # Initialize
-
+WAVELENGTH = 0.0056  # [unit:m]
 v_orig = 0.05  # [mm/year]
 h_orig = 30  # [m]
 noise_level = 0.0
-Num_search = np.array([40, 10])
-step_orig = np.array([1.0, 0.01])
+step_orig = np.array([1.0, 0.0001])
+std_param = np.array([40, 0.03])
+Num_search1 = af.compute_Nsearch(std_param[0], step_orig[0])
+Num_search2 = af.compute_Nsearch(std_param[1], step_orig[1])
+Num_search = np.array([Num_search1, Num_search2])
+
 param_orig = np.array([0, 0])
 # normal_baseline = np.random.normal(size=(1, 20))*300
 normal_baseline = np.array([[-235.25094786, -427.79160933, 36.37235105, 54.3278281, -87.27348344,
@@ -23,17 +27,18 @@ h2ph = af.h_coef(normal_baseline).T
 
 # phase_obsearvation simulate
 phase_obs = af.sim_arc_phase(v_orig, h_orig, noise_level, v2ph, h2ph)
+
 # print(phase_obs)
-param = af.periodogram(v2ph, h2ph, phase_obs,
-                       Num_search, step_orig, param_orig)
-print(param)
+# param = af.periodogram(v2ph, h2ph, phase_obs,
+#                        Num_search, step_orig, param_orig)
+# print(param)
 # count = 0
 # while count <= 1:
 #     param = af.periodogram(v2ph, h2ph, phase_obs,
 #                            Num_search, step_orig, param_orig)
 #     param_orig = param
 #     step_orig *= 0.1
-#     Num_search = np.array([40, 10])
+#     Num_search = np.array([40, 100])
 #     count += 1
 
 # print(len(param_orig))
@@ -64,3 +69,15 @@ print(param)
 #                         -1.16754325, 1.65687907, 1.8168527, -2.34515856, 2.05190303, -0.65915225,
 #                         -0.73824169, 0.65241122]])
 # # print(phase_orig.shape)
+data = np.array(
+    [[-0.8658+1.8919j, -0.7861+0.7072j, -0.8658+1.6096j, -0.8658+0.0733j]])
+a, b = af.maximum_coh(data)
+phase = np.array([[1, 2, 1, -2],
+                  [2, -4, -3, 1],
+                  [3, 5, 2, 3]])
+coh_exp = np.exp(1j*phase)
+coh_t = np.sum(coh_exp, axis=0, keepdims=True)
+best, index = af.maximum_coh(coh_t)
+print(b)
+print(coh_t)
+print(best, index)
