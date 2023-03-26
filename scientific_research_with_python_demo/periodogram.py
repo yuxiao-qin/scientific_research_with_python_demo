@@ -21,12 +21,12 @@ normal_baseline = np.array([[-235.25094786, -427.79160933, 36.37235105, 54.32782
                              12.17022031, -23.71273067, -241.58736045, -184.03477855, - 15.97933883,
                              -116.39428378, -545.53546226, -298.89492777, -379.2293736, 289.30702061]])
 
-time_baseline = np.arange(1, 21, 1).reshape(1, 20)
-v2ph = af.v_coef(time_baseline).T
-h2ph = af.h_coef(normal_baseline).T
+# time_baseline = np.arange(1, 21, 1).reshape(1, 20)
+# v2ph = af.v_coef(time_baseline).T
+# h2ph = af.h_coef(normal_baseline).T
 
 # phase_obsearvation simulate
-phase_obs = af.sim_arc_phase(v_orig, h_orig, noise_level, v2ph, h2ph)
+# phase_obs = af.sim_arc_phase(v_orig, h_orig, noise_level, v2ph, h2ph)
 
 # print(phase_obs)
 # param = af.periodogram(v2ph, h2ph, phase_obs,
@@ -69,15 +69,31 @@ phase_obs = af.sim_arc_phase(v_orig, h_orig, noise_level, v2ph, h2ph)
 #                         -1.16754325, 1.65687907, 1.8168527, -2.34515856, 2.05190303, -0.65915225,
 #                         -0.73824169, 0.65241122]])
 # # print(phase_orig.shape)
-data = np.array(
-    [[-0.8658+1.8919j, -0.7861+0.7072j, -0.8658+1.6096j, -0.8658+0.0733j]])
-a, b = af.maximum_coh(data)
-phase = np.array([[1, 2, 1, -2],
-                  [2, -4, -3, 1],
-                  [3, 5, 2, 3]])
-coh_exp = np.exp(1j*phase)
-coh_t = np.sum(coh_exp, axis=0, keepdims=True)
-best, index = af.maximum_coh(coh_t)
-print(b)
-print(coh_t)
-print(best, index)
+
+# data = np.array(
+#     [[-0.8658+1.8919j, -0.7861+0.7072j, -0.8658+1.6096j, -0.8658+0.0733j]])
+# a, b = af.maximum_coh(data)
+# phase = np.array([[1, 2, 1, -2],
+#                   [2, -4, -3, 1],
+#                   [3, 5, 2, 3]])
+# coh_exp = np.exp(1j*phase)
+# coh_t = np.sum(coh_exp, axis=0, keepdims=True)
+# best, index = af.maximum_coh(coh_t)
+# print(b)
+# print(coh_t)
+# print(best, index)
+
+h2ph = np.array([[3, 4, 5]]).T
+v2ph = np.array([[2, 4, 6]]).T
+A = np.hstack((h2ph, v2ph))
+phase = np.mat([[7, 12, 17]]).T
+actual1 = A
+actual = af.correct_param(A, phase)
+print(actual)
+# N = np.mat(np.dot(A.T, A))
+# R = np.mat(np.linalg.cholesky(N)).T
+# print(N)
+# print(R)
+# rhs = (R.I)*(((R.T).I)*A.T)
+# param_correct = rhs*phase
+# print(param_correct)

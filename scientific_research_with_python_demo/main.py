@@ -90,7 +90,7 @@ def v_coef(time_baseline) -> np.ndarray:
     temporal_step = 12  # [unit:d]
     temporal_samples = temporal_step*time_baseline
     # distance = velocity * days (convert from d to yr because velocity is in m/yr)
-    v2phase_coefficeint = 4 * np.pi * temporal_samples / (WAVELENGTH*365)
+    v2phase_coefficeint = temporal_samples / 365
 
     return v2phase_coefficeint
 
@@ -113,8 +113,8 @@ def h_coef(normal_baseline: float) -> np.ndarray:
     # error of perpendicular baseline
     # baseline_erro = np.random.rand(1, 20)
     # err_baseline = normal_baseline+baseline_erro
-    h2ph_coefficient = 4*np.pi*normal_baseline / \
-        (WAVELENGTH*R*np.sin(Incidence_angle))
+    h2ph_coefficient = normal_baseline / \
+        (R*np.sin(Incidence_angle))
 
     return h2ph_coefficient
 
@@ -136,7 +136,7 @@ def coef2phase(coefficeint, param: float) -> np.ndarray:
         difference phases based on v ,h or other paramters
     """
 
-    phase_model = coefficeint*param
+    phase_model = m2ph*coefficeint*param
 
     return phase_model
 
@@ -386,9 +386,9 @@ def compute_param(param_index, step, param_orig, num_search):
     return param
 
 
-def correct_h2ph(h2ph):
-    mean_h2ph = np.mean(h2ph, axis=0)
-    factors = h2ph/mean_h2ph
+def correct_h2ph(h2ph, n):
+    mean_h2ph = np.mean(h2ph, axis=1)
+    factors = h2ph[:, n]/mean_h2ph
     correct_factor = np.median(factors)
 
     return correct_factor
@@ -409,10 +409,17 @@ def compute_ambiguity(phase_obs, phase_model, phase_ambiguity_wrap):
     return a_check
 
 
+def model_matrix(v2ph, h2ph):
+
+    A_design = np.hstack((h2ph, v2ph))
+
+    return A_design
+
+
 def correct_param(A_design, phase_unwrap):
-    N = (A_design.T)*A_design
-    R = np.linalg.cholesky(N)
-    rhs = (R.I)*((R.T).I*A_design.T)
+    N = np.mat(np.dot(A_design.T, A_design))
+    R = np.mat(np.linalg.cholesky(N)).T
+    rhs = (R.I)*(((R.T).I)*A_design.T)
     param_correct = rhs*phase_unwrap
 
     return param_correct
