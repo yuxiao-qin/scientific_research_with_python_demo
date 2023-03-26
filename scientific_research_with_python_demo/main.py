@@ -387,6 +387,20 @@ def compute_param(param_index, step, param_orig, num_search):
 
 
 def correct_h2ph(h2ph, n):
+    """caculate factor to correct h 
+
+    Parameters
+    ----------
+    h2ph : float
+        h to phase factor per arc 
+    n : int
+        the index of  choosen arc
+
+    Returns
+    -------
+    correct_factor : float
+        correcting factor as of result of using  mean_h2ph to estimate parameters
+    """
     mean_h2ph = np.mean(h2ph, axis=1)
     factors = h2ph[:, n]/mean_h2ph
     correct_factor = np.median(factors)
@@ -394,17 +408,56 @@ def correct_h2ph(h2ph, n):
     return correct_factor
 
 
-def ambiguity_phase(v2ph, h2ph, param, best, phase_obs):
+def resedual_phase(v2ph, h2ph, param, best, phase_obs):
+    """compute phase resudual 
+    phase_model = phase_obs + 2pi*a_check + phase_resedual
+
+    Parameters
+    ----------
+    v2ph : float
+        v to phase factor
+    h2ph : float
+        h to phase factor
+    param : float
+        estimated paramters based on periodogram
+    best : float
+        max temporal coherence we searched (complex number)
+    phase_obs : float
+        observation phase
+
+    Returns
+    -------
+    phase_resedual : float
+        wrapped phase_resedual based on phase_model and phase_obs after parameters estimation
+    phase_model : float
+        phase based on parameters(v,h) we estimate
+    """
     phase_model = coef2phase(
         h2ph, param[0])+coef2phase(v2ph, param[1])+np.angle(best)
     phase_ambiguity = phase_obs-phase_model
-    phase_ambiguity_wrap = wrap_phase(phase_ambiguity)
+    phase_resedual = wrap_phase(phase_ambiguity)
 
-    return phase_ambiguity_wrap, phase_model
+    return phase_resedual, phase_model
 
 
-def compute_ambiguity(phase_obs, phase_model, phase_ambiguity_wrap):
-    a_check = round((phase_model+phase_ambiguity_wrap-phase_obs)/2*np.pi)
+def compute_ambiguity(phase_obs, phase_model, phase_resedual):
+    """compute interger ambiguity based on  round
+
+    Parameters
+    ----------
+    phase_obs : float
+        obseravation phase
+    phase_model : float
+        phase_model based on parameters (v,h) we estimate
+    phase_resedual : float
+        wrapped phase_resedual based on phase_model and phase_obs after parameters estimation
+
+    Returns
+    -------
+    a_check : int
+        phase ambiguity
+    """
+    a_check = round((phase_model+phase_resedual-phase_obs)/2*np.pi)
 
     return a_check
 
@@ -417,6 +470,20 @@ def model_matrix(v2ph, h2ph):
 
 
 def correct_param(A_design, phase_unwrap):
+    """correct parameter using unwrap_phase based on leaast-square estimation
+
+    Parameters
+    ----------
+    A_design : float
+        desiogn matrix consits of h2ph and v2ph
+    phase_unwrap : float
+        unwrapped phase based on parameters we estimated
+
+    Returns
+    -------
+    param_correct : float
+        the new parameters caculated by usuing least-square estimator
+    """
     N = np.mat(np.dot(A_design.T, A_design))
     R = np.mat(np.linalg.cholesky(N)).T
     rhs = (R.I)*(((R.T).I)*A_design.T)
