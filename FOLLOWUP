@@ -1,0 +1,8 @@
+1. clone to your local machine;
+1+. set up virtual environment; go to your virtualenv,  pip install via requirements.txt;
+2. checkout a branch of yourself from develop;
+3. implement the concrete logic for h2phase() function and its unittest.
+4. run uniittest.
+5. if everything all right, push to github remote repo (on your own branch).
+
+p.s. do everything in vscode because it's easier (recommended using our server.)

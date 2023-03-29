@@ -1,0 +1,7 @@
+numpy
+
+# for development purpose onlu
+black  # auto-formating code
+pylint # code quality check
+pytest # unit test
+
