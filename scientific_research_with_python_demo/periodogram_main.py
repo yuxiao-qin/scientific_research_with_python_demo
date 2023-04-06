@@ -1,7 +1,7 @@
-import utils
+import scientific_research_with_python_demo.utils as utils
 
 
-def periodogram(v2ph, h2ph, phase_obs, Num_search, step_orig: float, param_orig):
+def periodogram(par2ph, phase_obs, Num_search, step_orig: float, param_orig):
     """This is a program named "periodogram"
        It is an estimator seraching the solution space to find best (v,h),
        based on (topographic_height+linear_deformation)
@@ -42,28 +42,32 @@ def periodogram(v2ph, h2ph, phase_obs, Num_search, step_orig: float, param_orig)
     """
 
     # ---------------------------------------------------------
-    #  Step 1: Do something...
+    #  Step 1: construct parameter space ann related phase space
     # ---------------------------------------------------------
     search = dict()  # TODO: HOw to we initialize a dict?
     phase = dict()
+    param = dict()
     for key in ("height", "velocity"):
         search[key] = utils._construct_parameter_space(step_orig[key], Num_search[key], param_orig[key])
-        par2ph = v2ph if key == "velocity" else h2ph
-        phase[key] = utils._coef2phase(par2ph, search[key])
+        phase[key] = utils._coef2phase(par2ph[key], search[key])
 
-    # search_size=[serach_sizeH,serach_sizeH]
-    search_size = [Num_search[0] * 2, Num_search[1] * 2]
-
-    # kronecker积
+    # search_size=[serach_sizeH,serach_sizeV]
+    search_size = [Num_search["height"] * 2, Num_search["velocity"] * 2]
+    # ---------------------------------------------------------
+    # step 2:construct model_phase by using kronecker积 based on (v,h) pairs
+    # ---------------------------------------------------------
     phase_model = utils.model_phase(phase["velocity"], phase["height"], search_size)
-
+    # --------------------------------------------------------------------------
+    #  Step 3: compute temporal coherence , find max coherence and caculate (v,h)
+    # --------------------------------------------------------------------------
     coh_t = utils.simulate_temporal_coherence(phase_obs, phase_model)
     best, index = utils.find_maximum_coherence(coh_t)
-    sub = utils.index2sub(index, search_size)
+    sub = utils.list2dic(["height", "velocity"], utils.index2sub(index, search_size))
 
-    param_h = utils.compute_param(sub[0], step_orig[0], param_orig[0], Num_search[0])
-    param_v = utils.compute_param(sub[1], step_orig[1], param_orig[1], Num_search[1])
-
-    param = [param_h, param_v]
-
+    # calculate the best parameters
+    for key in ("height", "velocity"):
+        param[key] = utils.compute_param(sub[key], step_orig[key], param_orig[key], Num_search[key])
     return param
+
+
+#

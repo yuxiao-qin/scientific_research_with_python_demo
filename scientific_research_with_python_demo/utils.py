@@ -3,15 +3,35 @@ import numpy as np
 
 # Constant
 WAVELENGTH = 0.0056  # [unit:m]
-H = 780000    # satellite vertical height[m]
-Incidence_angle = 23*np.pi/180    # the local incidence angle
-R = H/np.cos(Incidence_angle)    # range to the master antenna. test
+H = 780000  # satellite vertical height[m]
+Incidence_angle = 23 * np.pi / 180  # the local incidence angle
+R = H / np.cos(Incidence_angle)  # range to the master antenna. test
 Nifg = 20
-m2ph = 4 * np.pi/WAVELENGTH
+m2ph = 4 * np.pi / WAVELENGTH
+
+
+def list2dic(param_key: list, param_value: list) -> dict:
+    """convert two list to a dictionary
+
+    Parameters
+    ----------
+    param_key : list
+        list of keys
+    param_value : list
+        list of values
+
+    Returns
+    -------
+    dict
+        dictionary of keys and values
+    """
+    param_dic = dict(zip(param_key, param_value))
+
+    return param_dic
 
 
 def compute_Nsearch(std_param: float, step):
-    Num_search = round(2*std_param/step)
+    Num_search = round(2 * std_param / step)
 
     return Num_search
 
@@ -35,7 +55,7 @@ def wrap_phase(phase: np.ndarray) -> np.ndarray:
 
 
 def unwrap_phase(phase, a_check) -> np.ndarray:
-    phase_unwrap = 2*np.pi*a_check+phase
+    phase_unwrap = 2 * np.pi * a_check + phase
 
     return phase_unwrap
 
@@ -89,7 +109,7 @@ def v_coef(time_baseline) -> np.ndarray:
     """
 
     temporal_step = 12  # [unit:d]
-    temporal_samples = temporal_step*time_baseline
+    temporal_samples = temporal_step * time_baseline
     # distance = velocity * days (convert from d to yr because velocity is in m/yr)
     v2phase_coefficeint = temporal_samples / 365
 
@@ -114,8 +134,7 @@ def h_coef(normal_baseline: float) -> np.ndarray:
     # error of perpendicular baseline
     # baseline_erro = np.random.rand(1, 20)
     # err_baseline = normal_baseline+baseline_erro
-    h2ph_coefficient = normal_baseline / \
-        (R*np.sin(Incidence_angle))
+    h2ph_coefficient = normal_baseline / (R * np.sin(Incidence_angle))
 
     return h2ph_coefficient
 
@@ -137,7 +156,7 @@ def _coef2phase(coefficeint, param: float) -> np.ndarray:
         difference phases based on v ,h or other paramters
     """
 
-    phase_model = m2ph*coefficeint*param
+    phase_model = m2ph * coefficeint * param
 
     return phase_model
 
@@ -156,7 +175,7 @@ def sim_phase_noise(noise_level: float) -> np.ndarray:
         phase noise
     """
 
-    noise = np.random.uniform(0, noise_level, (20, 1))*(4*np.pi/180)
+    noise = np.random.uniform(0, noise_level, (20, 1)) * (4 * np.pi / 180)
     # noise = np.random.normal(loc=0.0, scale=noise_level,
     #                          size=(1, 20))*(4*np.pi/180)
 
@@ -183,9 +202,9 @@ def _construct_parameter_space(step: float, Nsearch, param_orig) -> np.ndarray:
 
     # parm_space = np.mat(np.arange(param_orig-Nsearch*step,
     #                     param_orig+Nsearch*step, step))
-    min = param_orig-Nsearch*step
-    max = param_orig+Nsearch*step
-    param_space = np.mat(np.linspace(min, max, Nsearch*2))
+    min = param_orig - Nsearch * step
+    max = param_orig + Nsearch * step
+    param_space = np.mat(np.linspace(min, max, Nsearch * 2))
 
     return param_space
 
@@ -266,8 +285,9 @@ def model_phase(search_phase1, search_phase2, num_serach) -> np.ndarray:
 
     """
 
-    search_space = np.kron(search_phase1, np.ones(
-        (1, num_serach[0])))+np.kron(np.ones((1, num_serach[1])), search_phase2)
+    search_space = np.kron(search_phase1, np.ones((1, num_serach[0]))) + np.kron(
+        np.ones((1, num_serach[1])), search_phase2
+    )
 
     return search_space
 
@@ -292,10 +312,10 @@ def simulate_temporal_coherence(arc_phase, search_space) -> np.ndarray:
     # size of searched phase_model
     search_size = search_space.shape[1]
     # resdual_phase = phase_observation - phase_model
-    coh_phase = arc_phase*np.ones((1, search_size))-search_space
+    coh_phase = arc_phase * np.ones((1, search_size)) - search_space
 
     size_c = coh_phase.shape
-    coh_t = np.sum(np.exp(1j*coh_phase), axis=0)/Nifg
+    coh_t = np.sum(np.exp(1j * coh_phase), axis=0) / Nifg
     size_t = coh_t.shape
     # coherence = γ=|(1/Nifgs)Σexp(j*(φ0s_obs-φ0s_modle))|
 
@@ -356,8 +376,7 @@ def index2sub(best_index, num_search):
         subscripts of best in the matrix made of searched parameters
     """
 
-    param_index = np.unravel_index(
-        best_index, (num_search[0], num_search[1]), order="F")
+    param_index = np.unravel_index(best_index, (num_search[0], num_search[1]), order="F")
 
     return param_index
 
@@ -382,7 +401,7 @@ def compute_param(param_index, step, param_orig, num_search):
         (v,h) of max coherence each iterations
     """
 
-    param = param_orig+(param_index+1-num_search)*step
+    param = param_orig + (param_index + 1 - num_search) * step
 
     return param
 
@@ -403,7 +422,7 @@ def correct_h2ph(h2ph, n):
         correcting factor as of result of using  mean_h2ph to estimate parameters
     """
     mean_h2ph = np.mean(h2ph, axis=1)
-    factors = h2ph[:, n]/mean_h2ph
+    factors = h2ph[:, n] / mean_h2ph
     correct_factor = np.median(factors)
 
     return correct_factor
@@ -433,9 +452,8 @@ def resedual_phase(v2ph, h2ph, param, best, phase_obs):
     phase_model : float
         phase based on parameters(v,h) we estimate
     """
-    phase_model = _coef2phase(
-        h2ph, param[0])+_coef2phase(v2ph, param[1])+np.angle(best)
-    phase_ambiguity = phase_obs-phase_model
+    phase_model = _coef2phase(h2ph, param[0]) + _coef2phase(v2ph, param[1]) + np.angle(best)
+    phase_ambiguity = phase_obs - phase_model
     phase_resedual = wrap_phase(phase_ambiguity)
 
     return phase_resedual, phase_model
@@ -458,13 +476,12 @@ def compute_ambiguity(observed_phase, modeled_phase, residual_phase):
     a_check : int
         phase ambiguity
     """
-    estimated_ambiguities = round((modeled_phase+residual_phase-observed_phase)/2*np.pi)
+    estimated_ambiguities = round((modeled_phase + residual_phase - observed_phase) / 2 * np.pi)
 
     return estimated_ambiguities
 
 
 def model_matrix(v2ph, h2ph):
-
     design_matrix = np.hstack((h2ph, v2ph))
 
     return design_matrix
@@ -491,8 +508,7 @@ def correct_param(A_design, phase_unwrap):
     """
     N = np.mat(np.dot(A_design.T, A_design))
     R = np.mat(np.linalg.cholesky(N)).T
-    rhs = (R.I)*(((R.T).I)*A_design.T)
-    param_correct = rhs*phase_unwrap
+    rhs = (R.I) * (((R.T).I) * A_design.T)
+    param_correct = rhs * phase_unwrap
 
     return param_correct
-

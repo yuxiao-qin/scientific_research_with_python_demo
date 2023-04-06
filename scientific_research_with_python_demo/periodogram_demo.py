@@ -1,8 +1,10 @@
-import main as af
+import utils as af
 import numpy as np
 import sys
-sys .path.append(
-    '/data/tests/jiaxing/scientific_research_with_python_demo/scientific_research_with_python_demo')
+
+sys.path.append(
+    "/data/tests/jiaxing/scientific_research_with_python_demo/scientific_research_with_python_demo"
+)
 # Initialize
 WAVELENGTH = 0.0056  # [unit:m]
 v_orig = 0.05  # [mm/year]
@@ -16,10 +18,32 @@ Num_search = np.array([Num_search1, Num_search2])
 
 param_orig = np.array([0, 0])
 # normal_baseline = np.random.normal(size=(1, 20))*300
-normal_baseline = np.array([[-235.25094786, -427.79160933, 36.37235105, 54.3278281, -87.27348344,
-                             25.31470275, 201.85998322, 92.22902115, 244.66603228, -89.80792772,
-                             12.17022031, -23.71273067, -241.58736045, -184.03477855, - 15.97933883,
-                             -116.39428378, -545.53546226, -298.89492777, -379.2293736, 289.30702061]])
+normal_baseline = np.array(
+    [
+        [
+            -235.25094786,
+            -427.79160933,
+            36.37235105,
+            54.3278281,
+            -87.27348344,
+            25.31470275,
+            201.85998322,
+            92.22902115,
+            244.66603228,
+            -89.80792772,
+            12.17022031,
+            -23.71273067,
+            -241.58736045,
+            -184.03477855,
+            -15.97933883,
+            -116.39428378,
+            -545.53546226,
+            -298.89492777,
+            -379.2293736,
+            289.30702061,
+        ]
+    ]
+)
 
 # time_baseline = np.arange(1, 21, 1).reshape(1, 20)
 # v2ph = af.v_coef(time_baseline).T

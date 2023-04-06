@@ -1,7 +1,16 @@
 # from scientific_research_with_python_demo.main import v_coef, h_coef, coef2phase, sim_phase_noise, sim_arc_phase, param_search, phase_search, sim_temporal_coh, WAVELENGTH, wrap_phase, maximum_coh, periodogram, Incidence_angle, R, index2sub, compute_Nsearch, correct_h2ph
 import pytest
-import scientific_research_with_python_demo.main as af
+import scientific_research_with_python_demo.utils as af
+from scientific_research_with_python_demo.periodogram_main import periodogram
 import numpy as np
+
+
+def test_list2dic():
+    param_key = ["v", "h"]
+    param_value = [0.1, 10]
+    actual = af.list2dic(param_key, param_value)
+    desired = {"v": 0.1, "h": 10}
+    assert actual == desired
 
 
 def test_compute_Nsearch():
@@ -172,9 +181,7 @@ def test_argmax_complex_number():
     coh_t = abs(np.sum(coh_exp, axis=0, keepdims=True))
     best, index = af.maximum_coh(coh_t)
     actual = abs(np.exp(1j) + np.exp(2j) + np.exp(3j))
-    data = np.array(
-        [[-0.8658 + 1.8919j, -0.7861 + 0.7072j, -0.8658 + 1.6096j, -0.8658 + 0.0733j]]
-    )
+    data = np.array([[-0.8658 + 1.8919j, -0.7861 + 0.7072j, -0.8658 + 1.6096j, -0.8658 + 0.0733j]])
     a, b = af.maximum_coh(data)
     # assert index == 0
     assert (best == actual).all
@@ -219,9 +226,6 @@ def test_periodogram():
     v_orig = 0.05  # [mm/year]
     h_orig = 30  # [m]
     noise_level = 0.0
-    Num_search = [40, 10]
-    step_orig = [1, 0.01]
-    param_orig = [0, 0]
     normal_baseline = np.array(
         [
             [
@@ -252,9 +256,13 @@ def test_periodogram():
     time_baseline = np.arange(1, 21, 1).reshape(1, 20)
     v2ph = af.v_coef(time_baseline).T
     h2ph = af.h_coef(normal_baseline).T
-
+    param_name = ["height", "velocity"]
+    par2ph = af.list2dic(param_name, [h2ph, v2ph])
+    Num_search = af.list2dic(param_name, [40, 10])
+    step_orig = af.list2dic(param_name, [1, 0.01])
+    param_orig = af.list2dic(param_name, [0, 0])
     # phase_obsearvation simulate
     phase_obs = af.sim_arc_phase(v_orig, h_orig, noise_level, v2ph, h2ph)
-    param = af.periodogram(v2ph, h2ph, phase_obs, Num_search, step_orig, param_orig)
-    actual = len(param)
-    assert actual == 2
+    param = periodogram(par2ph, phase_obs, Num_search, step_orig, param_orig)
+    actual = param["height"]
+    assert actual == 30
