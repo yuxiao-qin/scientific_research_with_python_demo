@@ -1,7 +1,9 @@
-# from scientific_research_with_python_demo.main import v_coef, h_coef, coef2phase, sim_phase_noise, sim_arc_phase, param_search, phase_search, sim_temporal_coh, WAVELENGTH, wrap_phase, maximum_coh, periodogram, Incidence_angle, R, index2sub, compute_Nsearch, correct_h2ph
-import pytest
+import os, sys
+
+sys.path.append((os.path.abspath(os.path.join(os.path.dirname(__file__), "../"))))
 import scientific_research_with_python_demo.utils as af
 from scientific_research_with_python_demo.periodogram_main import periodogram
+
 import numpy as np
 
 
@@ -266,3 +268,16 @@ def test_periodogram():
     param = periodogram(par2ph, phase_obs, Num_search, step_orig, param_orig)
     actual = param["height"]
     assert actual == 30
+
+
+def test_input_parameters():
+    p2ph = [[1, 2, 3], [4, 5, 6]]
+    search_num = [2, 4]
+    step = [1, 2]
+    param = [1, 2]
+    param_name = ["height", "velocity"]
+    data = af.input_parameters(p2ph, search_num, step, param, param_name)
+    actual = data["height"]
+    desired = ([1, 2, 3], 2, 1, 1)
+
+    assert actual == desired
