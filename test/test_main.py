@@ -1,9 +1,5 @@
-import os, sys
-
-sys.path.append((os.path.abspath(os.path.join(os.path.dirname(__file__), "../"))))
+import pytest
 import scientific_research_with_python_demo.utils as af
-from scientific_research_with_python_demo.periodogram_main import periodogram
-
 import numpy as np
 
 
@@ -265,7 +261,7 @@ def test_periodogram():
     param_orig = af.list2dic(param_name, [0, 0])
     # phase_obsearvation simulate
     phase_obs = af.sim_arc_phase(v_orig, h_orig, noise_level, v2ph, h2ph)
-    param = periodogram(par2ph, phase_obs, Num_search, step_orig, param_orig)
+    param = af.periodogram(par2ph, phase_obs, Num_search, step_orig, param_orig)
     actual = param["height"]
     assert actual == 30
 
@@ -277,7 +273,7 @@ def test_input_parameters():
     param = [1, 2]
     param_name = ["height", "velocity"]
     data = af.input_parameters(p2ph, search_num, step, param, param_name)
-    actual = data["height"]
-    desired = ([1, 2, 3], 2, 1, 1)
+    actual = data["height"]["par2ph"]
+    desired = [1, 2, 3]
 
     assert actual == desired

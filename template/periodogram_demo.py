@@ -1,8 +1,5 @@
-import os, sys
-
-sys.path.append((os.path.abspath(os.path.join(os.path.dirname(__file__), "../"))))
 import scientific_research_with_python_demo.utils as af
-import scientific_research_with_python_demo.periodogram_main as periodogram
+from scientific_research_with_python_demo.utils import periodogram
 import numpy as np
 
 # import os, sys
