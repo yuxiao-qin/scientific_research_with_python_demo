@@ -1,10 +1,9 @@
 import pytest
 import sys
 
-sys.path.append(
-    "/data/tests/jiaxing/scientific_research_with_python_demo/scientific_research_with_python_demo"
-)
+sys.path.append("/data/tests/jiaxing/scientific_research_with_python_demo/scientific_research_with_python_demo")
 import scientific_research_with_python_demo.scientific_research_with_python_demo.utils as af
+import scientific_research_with_python_demo.scientific_research_with_python_demo.periodogram_main as pm
 import numpy as np
 
 
@@ -266,7 +265,7 @@ def test_periodogram():
     param_orig = af.list2dic(param_name, [0, 0])
     # phase_obsearvation simulate
     phase_obs = af.sim_arc_phase(v_orig, h_orig, noise_level, v2ph, h2ph)
-    param = af.periodogram(par2ph, phase_obs, Num_search, step_orig, param_orig)
+    param = pm.periodogram(par2ph, phase_obs, Num_search, step_orig, param_orig)
     actual = param["height"]
     assert actual == 30
 
@@ -276,7 +275,7 @@ def test_input_parameters():
     search_num = [2, 4]
     step = [1, 2]
     param = [1, 2]
-    param_name = ["height", "velocity"]
+    param_name = ("height", "velocity")
     data = af.input_parameters(p2ph, search_num, step, param, param_name)
     actual = data["height"]["par2ph"]
     desired = [1, 2, 3]
