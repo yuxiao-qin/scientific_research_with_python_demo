@@ -1,5 +1,10 @@
 import pytest
-import scientific_research_with_python_demo.utils as af
+import sys
+
+sys.path.append(
+    "/data/tests/jiaxing/scientific_research_with_python_demo/scientific_research_with_python_demo"
+)
+import scientific_research_with_python_demo.scientific_research_with_python_demo.utils as af
 import numpy as np
 
 
@@ -116,7 +121,7 @@ def test_param_search():
     param_orig = [0, 0]
     Bn = np.mat(np.array([1] * 20)).T
     h2ph = af.h_coef(Bn * (af.WAVELENGTH * af.R * np.sin(af.Incidence_angle)))
-    param_space = af._param_search(1, 10, param_orig[0])
+    param_space = af._construct_parameter_space(1, 10, param_orig[0])
     actual = af.phase_search(h2ph, param_space).shape
     assert actual == (20, 20)
 
@@ -125,7 +130,7 @@ def test_sim_temporal_coh():
     dphase = np.array([[1, 1, 1]]).T
     search_space = np.array([[1, 3, 2, 3], [2, 3, 4, 1], [1, 2, 1, 2]])
 
-    simulated = af.sim_temporal_coh(dphase, search_space)
+    simulated = af.simulate_temporal_coherence(dphase, search_space)
 
     actual = (
         np.array(
@@ -163,7 +168,7 @@ def test_maximum():
     # assert (phase_sum == actual).all
     # assert (simluated == actual_phase).all
     num_search = [2, 2]
-    max_param = af.maximum_coh(simluated)
+    max_param = af.find_maximum_coherence(simluated)
     best = max_param[0]
     best_index = max_param[1]
     para_index = af.index2sub(best_index, num_search)
@@ -177,10 +182,10 @@ def test_argmax_complex_number():
     phase = np.array([[1, 2, 1, -2], [2, -4, -3, 1], [3, 5, 2, 3]])
     coh_exp = np.exp(1j * phase)
     coh_t = abs(np.sum(coh_exp, axis=0, keepdims=True))
-    best, index = af.maximum_coh(coh_t)
+    best, index = af.find_maximum_coherence(coh_t)
     actual = abs(np.exp(1j) + np.exp(2j) + np.exp(3j))
     data = np.array([[-0.8658 + 1.8919j, -0.7861 + 0.7072j, -0.8658 + 1.6096j, -0.8658 + 0.0733j]])
-    a, b = af.maximum_coh(data)
+    a, b = af.find_maximum_coherence(data)
     # assert index == 0
     assert (best == actual).all
     assert b == 0
@@ -201,7 +206,7 @@ def test_ambiguity_phase():
     best = 1
     phase_obs = np.array([3, 4, 5]).T * af.m2ph
     phase_ambiguity = np.array([0, -2, -4]).T * af.m2ph
-    actual1, actual2 = af.ambiguity_phase(v2ph, h2ph, param, best, phase_obs)
+    actual1, actual2 = af.resedual_phase(v2ph, h2ph, param, best, phase_obs)
     desired = af.wrap_phase(phase_ambiguity)
     assert np.isclose(actual1, desired).all()
 
