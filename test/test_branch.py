@@ -1,3 +1,12 @@
+import pytest
+import sys
+
+sys.path.append("/data/tests/jiaxing/scientific_research_with_python_demo/scientific_research_with_python_demo")
+import scientific_research_with_python_demo.scientific_research_with_python_demo.utils as af
+import scientific_research_with_python_demo.scientific_research_with_python_demo.periodogram_main as pm
+import numpy as np
+
+
 def test_periodogram():
     v_orig = 0.05  # [mm/year]
     h_orig = 30  # [m]
@@ -39,6 +48,6 @@ def test_periodogram():
     param_orig = af.list2dic(param_name, [0, 0])
     # phase_obsearvation simulate
     phase_obs = af.sim_arc_phase(v_orig, h_orig, noise_level, v2ph, h2ph)
-    param = periodogram(par2ph, phase_obs, Num_search, step_orig, param_orig)
+    param = pm.periodogram(par2ph, phase_obs, Num_search, step_orig, param_orig)
     actual = param["height"]
     assert actual == 30
