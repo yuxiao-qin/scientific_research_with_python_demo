@@ -228,6 +228,17 @@ def test_periodogram():
     v_orig = 0.05  # [mm/year]
     h_orig = 30  # [m]
     noise_level = 0.0
+    step_orig = np.array([1.0, 0.01])
+    std_param = np.array([40, 0.03])
+    param_orig = np.array([0, 0])
+    param_name = ["height", "velocity"]
+    # calculate the number of search
+    Num_search1 = af.compute_Nsearch(std_param[0], step_orig[0])
+    Num_search2 = af.compute_Nsearch(std_param[1], step_orig[1])
+    Num_search = np.array([40, 10])
+    # simulate baseline
+    normal_baseline = np.random.normal(size=(1, 20)) * 300
+    time_baseline = np.arange(1, 21, 1).reshape(1, 20)
     normal_baseline = np.array(
         [
             [
@@ -254,18 +265,14 @@ def test_periodogram():
             ]
         ]
     )
-
-    time_baseline = np.arange(1, 21, 1).reshape(1, 20)
+    # calculate the input parameters of phase
     v2ph = af.v_coef(time_baseline).T
     h2ph = af.h_coef(normal_baseline).T
-    param_name = ["height", "velocity"]
-    par2ph = af.list2dic(param_name, [h2ph, v2ph])
-    Num_search = af.list2dic(param_name, [40, 10])
-    step_orig = af.list2dic(param_name, [1, 0.01])
-    param_orig = af.list2dic(param_name, [0, 0])
+    par2ph = [h2ph, v2ph]
     # phase_obsearvation simulate
     phase_obs = af.sim_arc_phase(v_orig, h_orig, noise_level, v2ph, h2ph)
-    param = pm.periodogram(par2ph, phase_obs, Num_search, step_orig, param_orig)
+    data_set = af.input_parameters(par2ph, step_orig, Num_search, param_orig, param_name)
+    param = pm.periodogram(data_set, phase_obs)
     actual = param["height"]
     assert actual == 30
 

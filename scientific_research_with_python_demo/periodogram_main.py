@@ -1,7 +1,7 @@
-import utils
+import scientific_research_with_python_demo.scientific_research_with_python_demo.utils as utils
 
 
-def periodogram(par2ph, phase_obs, Num_search, step_orig: float, param_orig):
+def periodogram(data: dict, phase_obs):
     """This is a program named "periodogram"
        It is an estimator seraching the solution space to find best (v,h),
        based on (topographic_height+linear_deformation)
@@ -48,11 +48,11 @@ def periodogram(par2ph, phase_obs, Num_search, step_orig: float, param_orig):
     phase = dict()
     param = dict()
     for key in ("height", "velocity"):
-        search[key] = utils._construct_parameter_space(step_orig[key], Num_search[key], param_orig[key])
-        phase[key] = utils._coef2phase(par2ph[key], search[key])
+        search[key] = utils._construct_parameter_space(data[key]["step_orig"], data[key]["Num_search"], data[key]["param_orig"])
+        phase[key] = utils._coef2phase(data[key]["par2ph"], search[key])
 
     # search_size=[serach_sizeH,serach_sizeV]
-    search_size = [Num_search["height"] * 2, Num_search["velocity"] * 2]
+    search_size = [data["height"]["Num_search"] * 2, data["velocity"]["Num_search"] * 2]
     # ---------------------------------------------------------
     # step 2:construct model_phase by using kronecker积 based on (v,h) pairs
     # ---------------------------------------------------------
@@ -66,5 +66,5 @@ def periodogram(par2ph, phase_obs, Num_search, step_orig: float, param_orig):
 
     # calculate the best parameters
     for key in ("height", "velocity"):
-        param[key] = utils.compute_param(sub[key], step_orig[key], param_orig[key], Num_search[key])
+        param[key] = utils.compute_param(sub[key], data[key]["step_orig"], data[key]["param_orig"], data[key]["Num_search"])
     return param

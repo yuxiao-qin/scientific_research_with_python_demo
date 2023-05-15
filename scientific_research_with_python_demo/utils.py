@@ -60,7 +60,7 @@ def unwrap_phase(phase, a_check) -> np.ndarray:
     return phase_unwrap
 
 
-def sim_arc_phase(v: float, h: float, noise_level: float, v2ph, h2ph: float) -> np.ndarray:
+def sim_arc_phase(v: float, h: float, noise_level: float, v2ph, h2ph: float, noise_phase) -> np.ndarray:
     """simulate phase of arc between two points based on a module(topographic_height + linear_deformation)
 
     Parameters
@@ -87,7 +87,6 @@ def sim_arc_phase(v: float, h: float, noise_level: float, v2ph, h2ph: float) -> 
     # h2ph = h2phase(h, normal_baseline)[0]
     v_phase = _coef2phase(v2ph, v)
     h_phase = _coef2phase(h2ph, h)
-    noise_phase = sim_phase_noise(noise_level)
     phase_unwrap = v_phase + h_phase + noise_phase
     arc_phase = wrap_phase(phase_unwrap)
 
@@ -161,7 +160,7 @@ def _coef2phase(coefficeint, param: float) -> np.ndarray:
     return phase_model
 
 
-def sim_phase_noise(noise_level: float) -> np.ndarray:
+def sim_phase_noise(noise_level: float, Nifg) -> np.ndarray:
     """simulate phase noise based on constant noise level
 
     Parameters
@@ -175,7 +174,7 @@ def sim_phase_noise(noise_level: float) -> np.ndarray:
         phase noise
     """
 
-    noise = np.random.uniform(0, noise_level, (20, 1)) * (4 * np.pi / 180)
+    noise = np.random.uniform(0, noise_level, (Nifg, 1)) * (4 * np.pi / 180)
     # noise = np.random.normal(loc=0.0, scale=noise_level,
     #                          size=(1, 20))*(4*np.pi/180)
 
@@ -513,75 +512,6 @@ def correct_param(A_design, phase_unwrap):
 
 
 def input_parameters(par2ph, step, Num_search, param_orig, param_name):
-    data_set = {key: {"par2ph": par2ph[i], "Num_search": Num_search[i], "step": step[i], "param_orig": param_orig[i]} for i, key in enumerate(param_name)}
+    data_set = {key: {"par2ph": par2ph[i], "Num_search": Num_search[i], "step_orig": step[i], "param_orig": param_orig[i]} for i, key in enumerate(param_name)}
 
     return data_set
-
-
-def periodogram(par2ph, phase_obs, Num_search, step_orig: float, param_orig):
-    """This is a program named "periodogram"
-       It is an estimator seraching the solution space to find best (v,h),
-       based on (topographic_height+linear_deformation)
-       which maximize the temporal coherence γ
-
-    Parameters
-    ----------
-    v2ph : float
-       velocity-to-phase conversion factor
-    h2ph : _type_
-        height-to-phase conversion factor
-    phase_obs : _type_
-        simulated obseravation based on 'topographic_height+linear_deformation+niose'
-    Num_search : _type_
-        size of solution space
-    step_orig : dict
-        step of searching solution related to parameters[step_h,step_v]
-    param_orig : _type_
-        original paramters (h,v)
-
-    Returns
-    -------
-    param : _type_
-        The parameters generated after each iteration
-
-    Notes
-    -----
-    The program consists of a number of modules,
-    which enables users to check and upgrade.
-
-    The modules are:
-        param_serach:
-           creat solution searching space
-        coef2phase:
-           compute phase based on baselines
-        model_phase:
-           computer
-    """
-
-    # ---------------------------------------------------------
-    #  Step 1: construct parameter space ann related phase space
-    # ---------------------------------------------------------
-    search = dict()  # TODO: HOw to we initialize a dict?
-    phase = dict()
-    param = dict()
-    for key in ("height", "velocity"):
-        search[key] = _construct_parameter_space(step_orig[key], Num_search[key], param_orig[key])
-        phase[key] = _coef2phase(par2ph[key], search[key])
-
-    # search_size=[serach_sizeH,serach_sizeV]
-    search_size = [Num_search["height"] * 2, Num_search["velocity"] * 2]
-    # ---------------------------------------------------------
-    # step 2:construct model_phase by using kronecker积 based on (v,h) pairs
-    # ---------------------------------------------------------
-    phase_model = model_phase(phase["velocity"], phase["height"], search_size)
-    # --------------------------------------------------------------------------
-    #  Step 3: compute temporal coherence , find max coherence and caculate (v,h)
-    # --------------------------------------------------------------------------
-    coh_t = simulate_temporal_coherence(phase_obs, phase_model)
-    best, index = find_maximum_coherence(coh_t)
-    sub = list2dic(["height", "velocity"], index2sub(index, search_size))
-
-    # calculate the best parameters
-    for key in ("height", "velocity"):
-        param[key] = compute_param(sub[key], step_orig[key], param_orig[key], Num_search[key])
-    return param
