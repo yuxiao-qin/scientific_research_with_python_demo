@@ -67,4 +67,5 @@ def periodogram(data: dict, phase_obs):
     # calculate the best parameters
     for key in ("height", "velocity"):
         param[key] = utils.compute_param(sub[key], data[key]["step_orig"], data[key]["param_orig"], data[key]["Num_search"])
-    return param
+
+    return param, best

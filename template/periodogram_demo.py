@@ -71,7 +71,7 @@ count = 0
 est_param = {}
 while count <= 10 and data_set["velocity"]["step_orig"] > 1.0e-8 and data_set["height"]["step_orig"] > 1.0e-4:
     # search the parameters
-    est_param = periodogram(data_set, phase_obs)
+    est_param, best = periodogram(data_set, phase_obs)
     # update the parameters
     for key in param_name:
         data_set[key]["param_orig"] = est_param[key]
@@ -82,4 +82,6 @@ while count <= 10 and data_set["velocity"]["step_orig"] > 1.0e-8 and data_set["h
 
     count += 1
 print(est_param)
+# ambiguty solution
+ambiguities = af.ambiguity_solution(data_set, 1, best, phase_obs)
 # print(data_set)

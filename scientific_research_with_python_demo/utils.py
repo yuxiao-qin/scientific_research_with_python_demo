@@ -10,6 +10,12 @@ Nifg = 20
 m2ph = 4 * np.pi / WAVELENGTH
 
 
+def input_parameters(par2ph, step, Num_search, param_orig, param_name):
+    data_set = {key: {"par2ph": par2ph[i], "Num_search": Num_search[i], "step_orig": step[i], "param_orig": param_orig[i]} for i, key in enumerate(param_name)}
+
+    return data_set
+
+
 def list2dic(param_key: list, param_value: list) -> dict:
     """convert two list to a dictionary
 
@@ -419,13 +425,13 @@ def correct_h2ph(h2ph, n):
         correcting factor as of result of using  mean_h2ph to estimate parameters
     """
     mean_h2ph = np.mean(h2ph, axis=1)
-    factors = h2ph[:, n] / mean_h2ph
+    factors = h2ph[n, :] / mean_h2ph
     correct_factor = np.median(factors)
 
     return correct_factor
 
 
-def resedual_phase(v2ph, h2ph, param, best, phase_obs):
+def resedual_phase(h2ph, v2ph, param, best, phase_obs):
     """compute phase resudual
     phase_model = phase_obs + 2pi*a_check + phase_resedual
 
@@ -473,7 +479,7 @@ def compute_ambiguity(observed_phase, modeled_phase, residual_phase):
     a_check : int
         phase ambiguity
     """
-    estimated_ambiguities = round((modeled_phase + residual_phase - observed_phase) / 2 * np.pi)
+    estimated_ambiguities = np.round((modeled_phase + residual_phase - observed_phase) / (2 * np.pi))
 
     return estimated_ambiguities
 
@@ -511,7 +517,21 @@ def correct_param(A_design, phase_unwrap):
     return param_correct
 
 
-def input_parameters(par2ph, step, Num_search, param_orig, param_name):
-    data_set = {key: {"par2ph": par2ph[i], "Num_search": Num_search[i], "step_orig": step[i], "param_orig": param_orig[i]} for i, key in enumerate(param_name)}
+def ambiguity_solution(data_set, n, best, phase_obs):
+    # ---------------------------------------
+    # Correct etsimated dH's for mean_h2ph
+    # ---------------------------------------
+    factors = correct_h2ph(data_set["height"]["par2ph"], n)
+    param1 = data_set["height"]["param_orig"] / factors
+    param2 = data_set["velocity"]["param_orig"]
+    # ---------------------------------------
+    # caculate phase resedual of ambiguities
+    # ---------------------------------------
+    phase_resedual, phase_model = resedual_phase(data_set["height"]["par2ph"], data_set["velocity"]["par2ph"], [param1, param2], best, phase_obs)
 
-    return data_set
+    # ---------------------------------------
+    # caculate ambiguities
+    # ---------------------------------------
+    a_check = compute_ambiguity(phase_obs, phase_model, phase_resedual)
+
+    return a_check
