@@ -7,8 +7,8 @@ import numpy as np
 # initial parameters
 # ------------------------------------------------
 WAVELENGTH = 0.0056  # [unit:m]
-Nifg = 30
-v_orig = 0.05  # [mm/year]
+Nifg = 20
+v_orig = 0.02  # [mm/year]
 h_orig = 30  # [m]
 noise_level = 0.0
 noise_phase = af.sim_phase_noise(noise_level, Nifg)
@@ -23,8 +23,9 @@ Num_search2 = af.compute_Nsearch(std_param[1], step_orig[1])
 Num_search = np.array([Num_search1, Num_search2])
 # simulate baseline
 normal_baseline = np.random.normal(size=(1, Nifg)) * 300
+print(normal_baseline)
 time_baseline = np.arange(1, Nifg + 1, 1).reshape(1, Nifg)
-print(time_baseline)
+# print(time_baseline)
 # normal_baseline = np.array(
 #     [
 #         [
@@ -54,10 +55,11 @@ print(time_baseline)
 # calculate the input parameters of phase
 v2ph = af.v_coef(time_baseline).T
 h2ph = af.h_coef(normal_baseline).T
+print(h2ph)
 par2ph = [h2ph, v2ph]
 # phase_obsearvation simulate
 phase_obs = af.sim_arc_phase(v_orig, h_orig, noise_level, v2ph, h2ph, noise_phase)
-
+print(phase_obs)
 # normalize the intput parameters
 data_set = af.input_parameters(par2ph, step_orig, Num_search, param_orig, param_name)
 # print(data_set)
@@ -69,7 +71,7 @@ data_set = af.input_parameters(par2ph, step_orig, Num_search, param_orig, param_
 # ------------------------------------------------
 count = 0
 est_param = {}
-while count <= 10 and data_set["velocity"]["step_orig"] > 1.0e-8 and data_set["height"]["step_orig"] > 1.0e-4:
+while count <= 2 and data_set["velocity"]["step_orig"] > 1.0e-8 and data_set["height"]["step_orig"] > 1.0e-4:
     # search the parameters
     est_param, best = periodogram(data_set, phase_obs)
     # update the parameters
@@ -84,4 +86,5 @@ while count <= 10 and data_set["velocity"]["step_orig"] > 1.0e-8 and data_set["h
 print(est_param)
 # ambiguty solution
 ambiguities = af.ambiguity_solution(data_set, 1, best, phase_obs)
+print(ambiguities)
 # print(data_set)
