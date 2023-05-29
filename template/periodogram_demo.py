@@ -3,17 +3,18 @@ from scientific_research_with_python_demo.scientific_research_with_python_demo.p
 import numpy as np
 import time
 
+# Nifg 的实验
 T1 = time.perf_counter()
 
 # ------------------------------------------------
 # initial parameters
 # ------------------------------------------------
 WAVELENGTH = 0.0056  # [unit:m]
-Nifg = 50
+Nifg = 30
 v_orig = 0.05  # [mm/year] 减少v，也可以改善估计结果，相当于减少了重访周期
 h_orig = 30  # [m]，整数 30 循环迭代搜索结果有问题
-noise_level = 0.0
-noise_phase = af.sim_phase_noise(noise_level, Nifg)
+noise_level = 1.0
+# noise_phase = af.sim_phase_noise(noise_level, Nifg)
 step_orig = np.array([1.0, 0.001])
 std_param = np.array([40, 0.03])
 param_orig = np.array([0, 0])
@@ -25,7 +26,8 @@ Num_search2 = af.compute_Nsearch(std_param[1], step_orig[1])
 Num_search = np.array([Num_search1, Num_search2])
 iteration = 0
 success = 0
-while iteration < 100:
+
+while iteration < 1000:
     iteration += 1
     # simulate baseline
     normal_baseline = np.random.normal(size=(1, Nifg)) * 333
@@ -63,6 +65,8 @@ while iteration < 100:
     h2ph = af.h_coef(normal_baseline).T
     # print(h2ph)
     par2ph = [h2ph, v2ph]
+    # simulate noise phase
+    noise_phase = af.sim_phase_noise(noise_level, Nifg)
     # phase_obsearvation simulate
     phase_obs = af.sim_arc_phase(v_orig, h_orig, noise_level, v2ph, h2ph, noise_phase)
     # print(phase_obs)
@@ -89,10 +93,11 @@ while iteration < 100:
         count += 1
     if abs(est_param["height"] - h_orig) < 0.5 and abs(est_param["velocity"] - v_orig) < 0.005:
         success += 1
-    else:
-        print(est_param)
+    # else:
+    #     print(est_param)
 # success rate
 print(success / iteration)
+
 T2 = time.perf_counter()
 print("程序运行时间:%s秒" % (T2 - T1))
 
