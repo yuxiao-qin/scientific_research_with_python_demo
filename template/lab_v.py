@@ -1,8 +1,8 @@
 import scientific_research_with_python_demo.scientific_research_with_python_demo.utils as af
 from scientific_research_with_python_demo.scientific_research_with_python_demo.periodogram_main import periodogram
+import scientific_research_with_python_demo.scientific_research_with_python_demo.data_plot as dp
 import numpy as np
 import time
-from scientific_research_with_python_demo.scientific_research_with_python_demo.data_plot import bar_plot
 
 # Nifg 的实验
 T1 = time.perf_counter()
@@ -11,27 +11,32 @@ T1 = time.perf_counter()
 # initial parameters
 # ------------------------------------------------
 WAVELENGTH = 0.0056  # [unit:m]
-Nifg_orig = np.arange(10, 100, 10)
-v_orig = 0.05  # [mm/year] 减少v，也可以改善估计结果，相当于减少了重访周期
+Nifg = 30
 h_orig = 30  # [m]，整数 30 循环迭代搜索结果有问题
-noise_level = 0
+noise_level = 1.0
 # noise_phase = af.sim_phase_noise(noise_level, Nifg)
-step_orig = np.array([1.0, 0.001])
-std_param = np.array([40, 0.03])
+step_orig = np.array([1.0, 0.0001])
+# std_param = np.array([40, 0.06])
 param_orig = np.array([0, 0])
 param_name = ["height", "velocity"]
+v_orig = np.arange(0.01, 0.1, 0.01)  # [mm/year] 减少v，也可以改善估计结果，相当于减少了重访周期
+# # calculate the number of search
+# Num_search1 = af.compute_Nsearch(std_param[0], step_orig[0])
+# Num_search2 = af.compute_Nsearch(std_param[1], step_orig[1])
+# Num_search = np.array([Num_search1, Num_search2])
 
-# calculate the number of search
-Num_search1 = af.compute_Nsearch(std_param[0], step_orig[0])
-Num_search2 = af.compute_Nsearch(std_param[1], step_orig[1])
-Num_search = np.array([Num_search1, Num_search2])
+success_rate = np.zeros(len(v_orig))
+for i in range(len(v_orig)):
+    v = v_orig[i]
+    std_param = np.array([40, v * 0.6])
+    # calculate the number of search
+    Num_search1 = af.compute_Nsearch(std_param[0], step_orig[0])
+    Num_search2 = af.compute_Nsearch(std_param[1], step_orig[1])
+    Num_search = np.array([Num_search1, Num_search2])
 
-success_rate = np.zeros(len(Nifg_orig))
-for i in range(len(Nifg_orig)):
+    print("v = ", v)
     iteration = 0
     success = 0
-    Nifg = Nifg_orig[i]
-    print("Nifg = ", Nifg)
     while iteration < 100:
         iteration += 1
         # simulate baseline
@@ -73,7 +78,7 @@ for i in range(len(Nifg_orig)):
         # simulate noise phase
         noise_phase = af.sim_phase_noise(noise_level, Nifg)
         # phase_obsearvation simulate
-        phase_obs = af.sim_arc_phase(v_orig, h_orig, noise_level, v2ph, h2ph, noise_phase)
+        phase_obs = af.sim_arc_phase(v, h_orig, noise_level, v2ph, h2ph, noise_phase)
         # print(phase_obs)
         # normalize the intput parameters
         data_set = af.input_parameters(par2ph, step_orig, Num_search, param_orig, param_name)
@@ -96,14 +101,19 @@ for i in range(len(Nifg_orig)):
                 data_set[key]["Num_search"] = 20
 
             count += 1
-        if abs(est_param["height"] - h_orig) < 0.5 and abs(est_param["velocity"] - v_orig) < 0.005:
+        if abs(est_param["height"] - h_orig) < 0.5 and abs(est_param["velocity"] - v) < 0.005:
             success += 1
         # else:
         #     print(est_param)
     # success rate
     print(success / iteration)
     success_rate[i] = success / iteration
-bar_plot(success_rate, Nifg_orig, v_orig, 1)
 print(success_rate)
+
 T2 = time.perf_counter()
 print("程序运行时间:%s秒" % (T2 - T1))
+dp.bar_v(success_rate, v_orig, 4)
+# ambiguty solution
+# ambiguities = af.ambiguity_solution(data_set, 1, best, phase_obs)
+# print(ambiguities)
+# print(data_set)
