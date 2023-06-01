@@ -311,3 +311,40 @@ def test_ambiguity_solution():
     assert np.isclose(actual, a).all()
     assert np.isclose(desired, b).all()
     assert np.isclose(erro, e).all()
+
+
+def test_gauss_noise():
+    signal = np.array(
+        [
+            [
+                -0.16197983,
+                2.07703957,
+                -0.38777374,
+                0.6686454,
+                0.69867534,
+                2.14699018,
+                -2.25000165,
+                -2.00269921,
+                1.26480048,
+                -0.22241084,
+                -0.93141071,
+                1.744535,
+                -1.16754325,
+                1.65687907,
+                1.8168527,
+                -2.34515856,
+                2.05190302,
+                -0.65915225,
+                -0.73824169,
+                0.65241122,
+            ]
+        ]
+    )
+    noise = af.gauss_noise(signal, 70)
+    signal_noise = signal + noise
+    Ps = (np.linalg.norm(signal - signal.mean())) ** 2
+    Pn = (np.linalg.norm(noise - noise.mean())) ** 2
+    SNR = 10 * np.log10(Ps / Pn)
+    actual = SNR
+    desired = 70
+    assert actual == desired

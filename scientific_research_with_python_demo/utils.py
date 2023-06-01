@@ -66,7 +66,7 @@ def unwrap_phase(phase, a_check) -> np.ndarray:
     return phase_unwrap
 
 
-def sim_arc_phase(v: float, h: float, noise_level: float, v2ph, h2ph: float, noise_phase) -> np.ndarray:
+def sim_arc_phase(v: float, h: float, v2ph, h2ph: float) -> np.ndarray:
     """simulate phase of arc between two points based on a module(topographic_height + linear_deformation)
 
     Parameters
@@ -93,7 +93,7 @@ def sim_arc_phase(v: float, h: float, noise_level: float, v2ph, h2ph: float, noi
     # h2ph = h2phase(h, normal_baseline)[0]
     v_phase = _coef2phase(v2ph, v)
     h_phase = _coef2phase(h2ph, h)
-    phase_unwrap = v_phase + h_phase + noise_phase
+    phase_unwrap = v_phase + h_phase
     arc_phase = wrap_phase(phase_unwrap)
 
     return arc_phase
@@ -184,6 +184,16 @@ def sim_phase_noise(noise_level: float, Nifg) -> np.ndarray:
     # noise = np.random.normal(loc=0.0, scale=noise_level,
     #                          size=(1, 20))*(4*np.pi/180)
 
+    return noise
+
+
+def gauss_noise(signal, SNR):
+    # 给数据加指定SNR的高斯噪声
+    noise = np.random.randn(signal.shape[0], signal.shape[1])  # 产生N(0,1)噪声数据
+    noise = noise - np.mean(noise)  # 均值为0
+    signal_power = np.linalg.norm(signal - signal.mean()) ** 2 / signal.size  # 此处是信号的std**2
+    noise_variance = signal_power / (10 ** (SNR / 10))  # 此处是噪声的std**2
+    noise = (np.sqrt(noise_variance) / np.std(noise)) * noise  # 此处是噪声的std**2
     return noise
 
 

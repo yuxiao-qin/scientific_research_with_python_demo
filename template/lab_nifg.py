@@ -14,7 +14,7 @@ WAVELENGTH = 0.0056  # [unit:m]
 Nifg_orig = np.arange(10, 100, 10)
 v_orig = 0.05  # [mm/year] 减少v，也可以改善估计结果，相当于减少了重访周期
 h_orig = 30  # [m]，整数 30 循环迭代搜索结果有问题
-noise_level = 0
+noise_level = 20
 # noise_phase = af.sim_phase_noise(noise_level, Nifg)
 step_orig = np.array([1.0, 0.001])
 std_param = np.array([40, 0.03])
@@ -70,11 +70,11 @@ for i in range(len(Nifg_orig)):
         h2ph = af.h_coef(normal_baseline).T
         # print(h2ph)
         par2ph = [h2ph, v2ph]
-        # simulate noise phase
-        noise_phase = af.sim_phase_noise(noise_level, Nifg)
         # phase_obsearvation simulate
-        phase_obs = af.sim_arc_phase(v_orig, h_orig, noise_level, v2ph, h2ph, noise_phase)
-        # print(phase_obs)
+        phase_obs = af.sim_arc_phase(v_orig, h_orig, v2ph, h2ph)
+        # simulate noise phase
+        noise_phase = af.gauss_noise(phase_obs, noise_level)
+        phase_obs += noise_phase
         # normalize the intput parameters
         data_set = af.input_parameters(par2ph, step_orig, Num_search, param_orig, param_name)
         # print(data_set)
@@ -103,7 +103,7 @@ for i in range(len(Nifg_orig)):
     # success rate
     print(success / iteration)
     success_rate[i] = success / iteration
-bar_plot(success_rate, Nifg_orig, v_orig, 1)
+bar_plot(Nifg_orig, success_rate, "Nifg1", 10)
 print(success_rate)
 T2 = time.perf_counter()
 print("程序运行时间:%s秒" % (T2 - T1))

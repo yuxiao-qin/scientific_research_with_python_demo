@@ -10,10 +10,10 @@ T1 = time.perf_counter()
 # initial parameters
 # ------------------------------------------------
 WAVELENGTH = 0.0056  # [unit:m]
-Nifg = 30
+Nifg = 50
 v_orig = 0.05  # [mm/year] 减少v，也可以改善估计结果，相当于减少了重访周期
 h_orig = 30  # [m]，整数 30 循环迭代搜索结果有问题
-noise_level = 1.0
+noise_level = 10
 # noise_phase = af.sim_phase_noise(noise_level, Nifg)
 step_orig = np.array([1.0, 0.001])
 std_param = np.array([40, 0.03])
@@ -26,8 +26,8 @@ Num_search2 = af.compute_Nsearch(std_param[1], step_orig[1])
 Num_search = np.array([Num_search1, Num_search2])
 iteration = 0
 success = 0
-
-while iteration < 1000:
+# std_param = {"height": 40, "velocity": 0.1}
+while iteration < 100:
     iteration += 1
     # simulate baseline
     normal_baseline = np.random.normal(size=(1, Nifg)) * 333
@@ -65,10 +65,11 @@ while iteration < 1000:
     h2ph = af.h_coef(normal_baseline).T
     # print(h2ph)
     par2ph = [h2ph, v2ph]
-    # simulate noise phase
-    noise_phase = af.sim_phase_noise(noise_level, Nifg)
     # phase_obsearvation simulate
-    phase_obs = af.sim_arc_phase(v_orig, h_orig, noise_level, v2ph, h2ph, noise_phase)
+    phase_obs = af.sim_arc_phase(v_orig, h_orig, v2ph, h2ph)
+    # simulate noise phase
+    noise_phase = af.gauss_noise(phase_obs, noise_level)
+    phase_obs += noise_phase
     # print(phase_obs)
     # normalize the intput parameters
     data_set = af.input_parameters(par2ph, step_orig, Num_search, param_orig, param_name)
@@ -79,7 +80,7 @@ while iteration < 1000:
     # ------------------------------------------------
     count = 0
     est_param = {}
-    while count <= 1 and data_set["velocity"]["step_orig"] > 1.0e-8 and data_set["height"]["step_orig"] > 1.0e-4:
+    while count <= 2 and data_set["velocity"]["step_orig"] > 1.0e-8 and data_set["height"]["step_orig"] > 1.0e-4:
         # search the parameters
         est_param, best = periodogram(data_set, phase_obs)
         # update the parameters
@@ -88,9 +89,10 @@ while iteration < 1000:
             # update the step
             data_set[key]["step_orig"] *= 0.1
             # update the number of search
-            data_set[key]["Num_search"] = 20
+            data_set["velocity"]["Num_search"] = 100
 
         count += 1
+    # print(est_param)
     if abs(est_param["height"] - h_orig) < 0.5 and abs(est_param["velocity"] - v_orig) < 0.005:
         success += 1
     # else:
