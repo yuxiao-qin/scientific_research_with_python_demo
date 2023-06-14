@@ -48,11 +48,13 @@ def periodogram(data: dict, phase_obs):
     phase = dict()
     param = dict()
     for key in ("height", "velocity"):
-        search[key] = utils._construct_parameter_space(data[key]["step_orig"], data[key]["Num_search"], data[key]["param_orig"])
+        search[key] = utils._construct_parameter_space(data[key]["step_orig"], data[key]["Num_search_max"], data[key]["Num_search_min"], data[key]["param_orig"])
         phase[key] = utils._coef2phase(data[key]["par2ph"], search[key])
 
     # search_size=[serach_sizeH,serach_sizeV]
-    search_size = [data["height"]["Num_search"] * 2, data["velocity"]["Num_search"] * 2]
+    s1 = search["height"]
+    s2 = search["velocity"]
+    search_size = [s1.shape[1], s2.shape[1]]
     # ---------------------------------------------------------
     # step 2:construct model_phase by using kronecker积 based on (v,h) pairs
     # ---------------------------------------------------------
@@ -66,6 +68,6 @@ def periodogram(data: dict, phase_obs):
 
     # calculate the best parameters
     for key in ("height", "velocity"):
-        param[key] = utils.compute_param(sub[key], data[key]["step_orig"], data[key]["param_orig"], data[key]["Num_search"])
+        param[key] = utils.compute_param(sub[key], data[key]["step_orig"], data[key]["param_orig"], data[key]["Num_search_min"])
 
     return param, best

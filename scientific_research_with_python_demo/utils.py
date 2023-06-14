@@ -11,7 +11,10 @@ m2ph = 4 * np.pi / WAVELENGTH
 
 
 def input_parameters(par2ph, step, Num_search, param_orig, param_name):
-    data_set = {key: {"par2ph": par2ph[i], "Num_search": Num_search[i], "step_orig": step[i], "param_orig": param_orig[i]} for i, key in enumerate(param_name)}
+    data_set = {
+        key: {"par2ph": par2ph[i], "Num_search_max": Num_search[i][0], "Num_search_min": Num_search[i][1], "step_orig": step[i], "param_orig": param_orig[i]}
+        for i, key in enumerate(param_name)
+    }
 
     return data_set
 
@@ -197,7 +200,7 @@ def gauss_noise(signal, SNR):
     return noise
 
 
-def _construct_parameter_space(step: float, Nsearch, param_orig) -> np.ndarray:
+def _construct_parameter_space(step: float, Nsearch_max, Nsearch_min, param_orig) -> np.ndarray:
     """create solution searching space
 
     Parameters
@@ -217,9 +220,9 @@ def _construct_parameter_space(step: float, Nsearch, param_orig) -> np.ndarray:
 
     # parm_space = np.mat(np.arange(param_orig-Nsearch*step,
     #                     param_orig+Nsearch*step, step))
-    min = param_orig - Nsearch * step
-    max = param_orig + Nsearch * step
-    param_space = np.mat(np.linspace(min, max, Nsearch * 2))
+    min = param_orig - Nsearch_min * step
+    max = param_orig + Nsearch_max * step
+    param_space = np.mat(np.linspace(min, max, Nsearch_max + Nsearch_min))
 
     return param_space
 
@@ -545,3 +548,20 @@ def ambiguity_solution(data_set, n, best, phase_obs):
     a_check = compute_ambiguity(phase_obs, phase_model, phase_resedual)
 
     return a_check
+
+
+def data_prepare(params):
+    if params["est_flag"] == 0:  # normal case
+        return params
+    elif params["est_flag"] == 1:  # test of v
+        params["v_orig"] = np.linspace(params["v_range"][0], params["v_range"][1], 50)
+    elif params["est_flag"] == 2:  # test of h
+        params["h_orig"] = np.linspace(params["h_range"][0], params["h_range"][1], 50)
+    elif params["est_flag"] == 3:  # test of Nifg
+        params["Nifg_orig"] = np.arange(params["Nifg_range"][0], params["Nifg_range"][1], 1)
+    elif params["est_flag"] == 4:  # test of std_v
+        params["std_v"] = np.linspace(params["std_v_range"][0], params["std_v_range"][1], 100)
+    elif params["est_flag"] == 5:  # test of std_h
+        params["std_h"] = np.linspace(params["std_h_range"][0], params["std_h_range"][1], 100)
+
+    return params

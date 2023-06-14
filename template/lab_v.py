@@ -11,33 +11,37 @@ T1 = time.perf_counter()
 # initial parameters
 # ------------------------------------------------
 WAVELENGTH = 0.0056  # [unit:m]
-Nifg = 30
+Nifg = 50
 h_orig = 30  # [m]，整数 30 循环迭代搜索结果有问题
-noise_level = 10
+noise_level = 70
 # noise_phase = af.sim_phase_noise(noise_level, Nifg)
 step_orig = np.array([1.0, 0.0001])
 # std_param = np.array([40, 0.06])
 param_orig = np.array([0, 0])
 param_name = ["height", "velocity"]
-v_orig = np.linspace(0, 0.02, 100, dtype=np.float32)  # [mm/year] 减少v，也可以改善估计结果，相当于减少了重访周期
+# v_orig = np.linspace(0, 0.2, 50, dtype=np.float32)  # [mm/year] 减少v，也可以改善估计结果，相当于减少了重访周期
+# v_orig = np.linspace(0, 0.1, 50)
+# v_orig = np.array([0.001, 0.002, 0.003, 0.004, 0.005, 0.006, 0.007, 0.008, 0.009, 0.01, 0.02, 0.03, 0.04])
+# v_orig = np.linspace(0.01, 0.1, 10)
+v_orig = np.linspace(0.001, 0.01, 10)
 # # calculate the number of search
 # Num_search1 = af.compute_Nsearch(std_param[0], step_orig[0])
 # Num_search2 = af.compute_Nsearch(std_param[1], step_orig[1])
 # Num_search = np.array([Num_search1, Num_search2])
-
+std_param = np.array([40, 0.08])
+# calculate the number of search
+Num_search1_max = 80
+Num_search1_min = 80
+Num_search2_max = 1600
+Num_search2_min = 500
+Num_search = np.array([[Num_search1_max, Num_search1_min], [Num_search2_max, Num_search2_min]])
 success_rate = np.zeros(len(v_orig))
 for i in range(len(v_orig)):
     v = v_orig[i]
-    std_param = np.array([40, 0.01])
-    # calculate the number of search
-    Num_search1 = af.compute_Nsearch(std_param[0], step_orig[0])
-    Num_search2 = af.compute_Nsearch(std_param[1], step_orig[1])
-    Num_search = np.array([Num_search1, Num_search2])
-
-    # print("v = ", v)
+    print("v = ", v)
     iteration = 0
     success = 0
-    while iteration < 10:
+    while iteration < 100:
         iteration += 1
         # simulate baseline
         normal_baseline = np.random.normal(size=(1, Nifg)) * 333
@@ -89,7 +93,7 @@ for i in range(len(v_orig)):
         # ------------------------------------------------
         count = 0
         est_param = {}
-        while count <= 1 and data_set["velocity"]["step_orig"] > 1.0e-8 and data_set["height"]["step_orig"] > 1.0e-4:
+        while count <= 2 and data_set["velocity"]["step_orig"] > 1.0e-8 and data_set["height"]["step_orig"] > 1.0e-4:
             # search the parameters
             est_param, best = periodogram(data_set, phase_obs)
             # update the parameters
@@ -98,7 +102,7 @@ for i in range(len(v_orig)):
                 # update the step
                 data_set[key]["step_orig"] *= 0.1
                 # update the number of search
-                data_set[key]["Num_search"] = 20
+                data_set["velocity"]["Num_search"] = 10
 
             count += 1
         if abs(est_param["height"] - h_orig) < 0.5 and abs(est_param["velocity"] - v) < 0.005:
@@ -106,14 +110,14 @@ for i in range(len(v_orig)):
         # else:
         #     print(est_param)
     # success rate
-    # print(success / iteration)
+    print(success / iteration)
     success_rate[i] = success / iteration
 print(success_rate)
 
 T2 = time.perf_counter()
 print("程序运行时间:%s秒" % (T2 - T1))
-# dp.bar_plot(v_orig * 1000, success_rate, "demo7", 0.002 * 1000, "v[mm/year]")
-dp.line_plot(v_orig * 1000, success_rate, "demo8", "v[mm/year]")
+# dp.bar_plot(v_orig * 1000, success_rate, "demo17", 0.001 * 1000, "Nifg=30,v[mm/year]")
+# dp.line_plot(v_orig * 1000, success_rate, "demo14", "v[mm/year]")
 # ambiguty solution
 # ambiguities = af.ambiguity_solution(data_set, 1, best, phase_obs)
 # print(ambiguities)
