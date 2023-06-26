@@ -11,62 +11,37 @@ T1 = time.perf_counter()
 # initial parameters
 # ------------------------------------------------
 WAVELENGTH = 0.0056  # [unit:m]
-Nifg = 50
+Nifg = 20
 v_orig = 0.05  # [mm/year] 减少v，也可以改善估计结果，相当于减少了重访周期
-h_orig = 35  # [m]，整数 30 循环迭代搜索结果有问题
+h_orig = 30  # [m]，整数 30 循环迭代搜索结果有问题
 noise_level = 70
 # noise_phase = af.sim_phase_noise(noise_level, Nifg)
 step_orig = np.array([1.0, 0.0001])
-# std_v = np.linspace(0.05, 0.1, 100)
-std_v = [0.1]
+std_v = np.linspace(0, 0.1, 50)
+# std_v = [0.1]
 param_orig = np.array([0, 0])
 param_name = ["height", "velocity"]
 
 # simulate baseline
 normal_baseline = np.fromfile(
-    "/data/tests/jiaxing/scientific_research_with_python_demo/scientific_research_with_python_demo/data_save/normal_baseline.bin", dtype=np.float64
+    "/data/tests/jiaxing/scientific_research_with_python_demo/scientific_research_with_python_demo/data_save/normal_baseline20.bin", dtype=np.float64
 ).reshape(1, Nifg)
 iteration = 0
 success = 0
-est_velocity = np.zeros(100)
+est_velocity = np.zeros(50)
 # std_param = {"height": 40, "velocity": 0.1}
-while iteration < len(std_v):
+
+while iteration < 50:
     std_param = np.array([100, std_v[iteration]])
     Num_search1_max = 80
     Num_search1_min = 80
-    Num_search2_max = 2000
-    Num_search2_min = 500
+    Num_search2_max = 1600
+    Num_search2_min = 1600
     Num_search = np.array([[Num_search1_max, Num_search1_min], [Num_search2_max, Num_search2_min]])
-
+    print(Num_search)
     # print(normal_baseline)
     time_baseline = np.arange(1, Nifg + 1, 1).reshape(1, Nifg)  # 减小重访周期 dt 能明显改善结果
     # print(time_baseline)
-    # normal_baseline = np.array(
-    #     [
-    #         [
-    #             -235.25094786,
-    #             -427.79160933,
-    #             36.37235105,
-    #             54.3278281,
-    #             -87.27348344,
-    #             25.31470275,
-    #             201.85998322,
-    #             92.22902115,
-    #             244.66603228,
-    #             -89.80792772,
-    #             12.17022031,
-    #             -23.71273067,
-    #             -241.58736045,
-    #             -184.03477855,
-    #             -15.97933883,
-    #             -116.39428378,
-    #             -545.53546226,
-    #             -298.89492777,
-    #             -379.2293736,
-    #             289.30702061,
-    #         ]
-    #     ]
-    # )
     # calculate the input parameters of phase
     v2ph = af.v_coef(time_baseline).T
     h2ph = af.h_coef(normal_baseline).T
@@ -80,6 +55,7 @@ while iteration < len(std_v):
     # print(phase_obs)
     # normalize the intput parameters
     data_set = af.input_parameters(par2ph, step_orig, Num_search, param_orig, param_name)
+    print(data_set["velocity"]["Num_search_max"], data_set["velocity"]["Num_search_min"])
     # print(data_set)
     # print(data_set["velocity"]["Num_search"])
     # ------------------------------------------------
@@ -109,8 +85,8 @@ while iteration < len(std_v):
     #     print(est_param)
 # success rate
 print(success / iteration)
-# print(est_velocity)
-np.savetxt("/data/tests/jiaxing/scientific_research_with_python_demo/scientific_research_with_python_demo/data_save/est_velocity4.txt", est_velocity)
-dp.hist_plot(est_velocity, "demo34", "v/m/year", "count", 50, "hist")
+print(est_velocity)
+# np.savetxt("/data/tests/jiaxing/scientific_research_with_python_demo/scientific_research_with_python_demo/data_save/std0_05_0_1_03.txt", est_velocity)
+# dp.hist_plot(est_velocity, "std0_05_0_1_03", "v/m/year", "count", 100, "Nifg=20,SNR=70db,v=0.05")
 T2 = time.perf_counter()
 print("程序运行时间:%s秒" % (T2 - T1))

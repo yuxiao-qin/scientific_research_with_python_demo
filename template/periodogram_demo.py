@@ -26,7 +26,7 @@ Num_search1_max = af.compute_Nsearch(std_param[0], step_orig[0])
 Num_search1_min = Num_search1_max
 Num_search2_max = af.compute_Nsearch(std_param[1], step_orig[1])
 Num_search2_min = Num_search2_max
-Num_search = np.array([Num_search1_max, Num_search1_min, Num_search2_max, Num_search2_min])
+Num_search = np.array([[Num_search1_max, Num_search1_min], [Num_search2_max, Num_search2_min]])
 iteration = 0
 success = 0
 est_velocity = np.zeros(100)
@@ -35,7 +35,7 @@ while iteration < 1:
     # simulate baseline
     normal_baseline = np.random.normal(size=(1, Nifg)) * 333
     print(normal_baseline)
-    normal_baseline.tofile("/data/tests/jiaxing/scientific_research_with_python_demo/scientific_research_with_python_demo/data_save/normal_baseline.bin")
+    normal_baseline.tofile("/data/tests/jiaxing/scientific_research_with_python_demo/scientific_research_with_python_demo/data_save/normal_baseline50.bin")
     # print(normal_baseline)
     time_baseline = np.arange(1, Nifg + 1, 1).reshape(1, Nifg)  # 减小重访周期 dt 能明显改善结果
     # print(time_baseline)

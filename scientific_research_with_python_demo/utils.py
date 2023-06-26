@@ -222,7 +222,7 @@ def _construct_parameter_space(step: float, Nsearch_max, Nsearch_min, param_orig
     #                     param_orig+Nsearch*step, step))
     min = param_orig - Nsearch_min * step
     max = param_orig + Nsearch_max * step
-    param_space = np.mat(np.linspace(min, max, Nsearch_max + Nsearch_min))
+    param_space = np.mat(np.round(np.linspace(min, max, Nsearch_max + Nsearch_min), 4))
 
     return param_space
 

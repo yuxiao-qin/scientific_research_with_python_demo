@@ -11,9 +11,9 @@ T1 = time.perf_counter()
 # initial parameters
 # ------------------------------------------------
 WAVELENGTH = 0.0056  # [unit:m]
-Nifg = 50
+Nifg = 30
 h_orig = 30  # [m]，整数 30 循环迭代搜索结果有问题
-noise_level = 70
+noise_level = 10
 # noise_phase = af.sim_phase_noise(noise_level, Nifg)
 step_orig = np.array([1.0, 0.0001])
 # std_param = np.array([40, 0.06])
@@ -48,32 +48,7 @@ for i in range(len(v_orig)):
         # print(normal_baseline)
         time_baseline = np.arange(1, Nifg + 1, 1).reshape(1, Nifg)  # 减小重访周期 dt 能明显改善结果
         # print(time_baseline)
-        # normal_baseline = np.array(
-        #     [
-        #         [
-        #             -235.25094786,
-        #             -427.79160933,
-        #             36.37235105,
-        #             54.3278281,
-        #             -87.27348344,
-        #             25.31470275,
-        #             201.85998322,
-        #             92.22902115,
-        #             244.66603228,
-        #             -89.80792772,
-        #             12.17022031,
-        #             -23.71273067,
-        #             -241.58736045,
-        #             -184.03477855,
-        #             -15.97933883,
-        #             -116.39428378,
-        #             -545.53546226,
-        #             -298.89492777,
-        #             -379.2293736,
-        #             289.30702061,
-        #         ]
-        #     ]
-        # )
+
         # calculate the input parameters of phase
         v2ph = af.v_coef(time_baseline).T
         h2ph = af.h_coef(normal_baseline).T
@@ -102,7 +77,8 @@ for i in range(len(v_orig)):
                 # update the step
                 data_set[key]["step_orig"] *= 0.1
                 # update the number of search
-                data_set["velocity"]["Num_search"] = 10
+                data_set[key]["Num_search_max"] = 10
+                data_set[key]["Num_search_min"] = 10
 
             count += 1
         if abs(est_param["height"] - h_orig) < 0.5 and abs(est_param["velocity"] - v) < 0.005:
@@ -113,10 +89,10 @@ for i in range(len(v_orig)):
     print(success / iteration)
     success_rate[i] = success / iteration
 print(success_rate)
-
+np.savetxt("/data/tests/jiaxing/scientific_research_with_python_demo/scientific_research_with_python_demo/data_save/snr10_3.txt", success_rate)
 T2 = time.perf_counter()
 print("程序运行时间:%s秒" % (T2 - T1))
-# dp.bar_plot(v_orig * 1000, success_rate, "demo17", 0.001 * 1000, "Nifg=30,v[mm/year]")
+dp.bar_plot(v_orig * 1000, success_rate, "Nifg=30,SNR=10db,dt=12", "snr10_3", 0.001 * 1000, "v[mm/year]")
 # dp.line_plot(v_orig * 1000, success_rate, "demo14", "v[mm/year]")
 # ambiguty solution
 # ambiguities = af.ambiguity_solution(data_set, 1, best, phase_obs)
