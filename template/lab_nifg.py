@@ -11,7 +11,8 @@ T1 = time.perf_counter()
 # initial parameters
 # ------------------------------------------------
 WAVELENGTH = 0.0056  # [unit:m]
-Nifg_orig = np.linspace(10, 50, 40, dtype=int)
+# Nifg_orig = np.linspace(10, 50, 40, dtype=int)
+Nifg_orig = [49]
 v_orig = 0.05  # [mm/year] 减少v，也可以改善估计结果，相当于减少了重访周期
 h_orig = 30  # [m]，整数 30 循环迭代搜索结果有问题
 noise_level = 70
@@ -72,15 +73,15 @@ for i in range(len(Nifg_orig)):
             count += 1
         if abs(est_param["height"] - h) < 0.5 and abs(est_param["velocity"] - v) < 0.00025:
             success += 1
-        est[i, iteration] = est_param["height"]
-        est[i + 40, iteration] = est_param["velocity"]
+        # est[i, iteration] = est_param["height"]
+        # est[i + 40, iteration] = est_param["velocity"]
         iteration += 1
     # success rate
     print(success / iteration)
-    est[80][i] = success / iteration
-np.savetxt("/data/tests/jiaxing/scientific_research_with_python_demo/scientific_research_with_python_demo/data_save/Nifg_70.csv", est, delimiter=",")
+    # est[80][i] = success / iteration
+# np.savetxt("/data/tests/jiaxing/scientific_research_with_python_demo/scientific_research_with_python_demo/data_save/Nifg_70.csv", est, delimiter=",")
 
-dp.bar_plot(Nifg_orig, success_rate, "SNR=70,dt=12,v=0.05,h=30", "Nifg_70", 1, "Nifg")
+# dp.bar_plot(Nifg_orig, success_rate, "SNR=70,dt=12,v=0.05,h=30", "Nifg_70", 1, "Nifg")
 print(success_rate)
 T2 = time.perf_counter()
 print("程序运行时间:%s秒" % (T2 - T1))

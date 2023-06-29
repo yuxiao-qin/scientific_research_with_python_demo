@@ -1,5 +1,6 @@
 import scientific_research_with_python_demo.scientific_research_with_python_demo.data_plot as dp
 import numpy as np
+import csv
 
 # v_orig = np.linspace(0.001, 0.01, 10, dtype=np.float32)
 # Nifg = np.linspace(10, 100, 10)
@@ -51,7 +52,10 @@ import numpy as np
 # v_orig = np.linspace(0.001, 0.2, 200)
 # dp.bar_plot(v_orig * 1000, success_rate, "Nifg=10,SNR=80db,dt=12", "snr_v_test5", 0.001 * 1000, "v[mm/year]")
 # dp.line_plot(v_orig * 1000, success_rate, "Nifg=10,SNR=80db,dt=12", "snr_v_test6", "v[mm/year]")
-Nifg_orig = np.linspace(10, 50, 40, dtype=int)
-est_data = np.loadtxt("/data/tests/jiaxing/scientific_research_with_python_demo/scientific_research_with_python_demo/data_save/Nifg_70.csv", delimiter=",")
-success_rate = est_data[80, 0:40]
+Nifg_orig = np.linspace(10, 50, 41, dtype=int)
+est_data = np.loadtxt("/data/tests/jiaxing/scientific_research_with_python_demo/scientific_research_with_python_demo/data_save/Nifg_70_correct.csv", delimiter=",")
+success_rate = est_data[80, 0:41]
+
+print(success_rate.shape)
+print(Nifg_orig.shape)
 dp.bar_plot(Nifg_orig, success_rate, "SNR=70,dt=12,v=0.05,h=30", "Nifg_70", 1, "Nifg")
