@@ -5,19 +5,21 @@ import os
 
 def bar_plot(x, y, title, name, dx, x_name):
     # 柱状图
-    plt.figure()
+    plt.figure(figsize=(20, 8))
     # plt.rc("font", family="FangSong")
     plt.bar(x, y, width=0.5 * dx)
     for x0, y0 in zip(x, y):
         # ha: horizontal alignment（横向对齐方式）， va: vertical alignment（纵向对齐方式）
         # x+2.5, y+0.05 为标签的坐标
-        plt.text(x0, y0 + 0.005, "%.2f" % y0, ha="center", va="bottom")
-    plt.title(title, fontsize=20)
+        if y0 != 0:
+            plt.text(x0, y0 + 0.005, "%.2f" % y0, ha="center", va="bottom")
+    plt.title(title, fontsize=16, y=1.05)
     # plt.xlabel("Nifg", fontsize=14)
     plt.xlabel(x_name, fontsize=14)
     plt.ylabel("success_rate", fontsize=14)
     # x轴刻度
-    plt.xticks(x)
+    # plt.xticks(x)
+    # plt.xticks(np.linspace(0.001, 0.2, 5) * 1000)
     plt.ylim(0, 1)
     ax = plt.gca()
     # 坐标轴的边框（脊梁）去掉边框
@@ -30,7 +32,7 @@ def bar_plot(x, y, title, name, dx, x_name):
     plt.savefig(os.path.join(figure_save_path, name))  # 分别命名图片
 
 
-def line_plot(x, y, name, x_name):
+def line_plot(x, y, title, name, x_name):
     # 折线图
     plt.figure()
     # plt.rc("font", family="FangSong")
@@ -39,7 +41,9 @@ def line_plot(x, y, name, x_name):
     plt.xlabel(x_name, fontsize=14)
     plt.ylabel("success_rate", fontsize=14)
     plt.ylim(0, 1)
-    plt.xticks(x)
+    # plt.xticks(x)
+    plt.xticks(np.linspace(0.001, 0.2, 5) * 1000)
+    plt.title(title, fontsize=20, y=1.05)
     ax = plt.gca()
     # 坐标轴的边框（脊梁）去掉边框
     ax.spines["right"].set_color("none")
@@ -77,16 +81,17 @@ def scatter_plot(est, desired, x_name, y_name, x_ax, tile, name):
 
 def hist_plot(x, name, x_name, y_name, dx, title):
     # 绘制直方图
-    plt.figure(figsize=(30, 8))
+    plt.figure(figsize=(15, 8))
     # plt.rc("font", family="FangSong")
-    nums, bins, patches = plt.hist(x, bins=dx, edgecolor="k", width=0.01)
+    nums, bins, patches = plt.hist(x, bins=dx, edgecolor="k", width=0.005)
     plt.xticks(bins, bins)
     for num, bin in zip(nums, bins):
-        plt.annotate(num, xy=(bin, num), xytext=(bin, num + 0.5))
+        if num != 0:
+            plt.annotate(num, xy=(bin, num), xytext=(bin, num + 0.5))
     plt.title(title, fontsize=20, y=1.05)
     plt.xlabel(x_name, fontsize=14)
     plt.ylabel(y_name, fontsize=14)
-    # plt.xticks(np.linspace(-0.2, 0.2, 100))
+    plt.xticks(np.linspace(-0.2, 0.2, 100))
     plt.xticks(rotation=50)
     plt.xlim(-0.2, 0.2)
     ax = plt.gca()

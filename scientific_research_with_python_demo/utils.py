@@ -69,7 +69,7 @@ def unwrap_phase(phase, a_check) -> np.ndarray:
     return phase_unwrap
 
 
-def sim_arc_phase(v: float, h: float, v2ph, h2ph: float) -> np.ndarray:
+def sim_arc_phase(v: float, h: float, v2ph, h2ph: float, SNR) -> np.ndarray:
     """simulate phase of arc between two points based on a module(topographic_height + linear_deformation)
 
     Parameters
@@ -97,9 +97,13 @@ def sim_arc_phase(v: float, h: float, v2ph, h2ph: float) -> np.ndarray:
     v_phase = _coef2phase(v2ph, v)
     h_phase = _coef2phase(h2ph, h)
     phase_unwrap = v_phase + h_phase
-    arc_phase = wrap_phase(phase_unwrap)
-
-    return arc_phase
+    # noise = gauss_noise(phase_unwrap, SNR)
+    noise = add_gaussian_noise(phase_unwrap, SNR)
+    phase_true = phase_unwrap + noise
+    arc_phase = wrap_phase(phase_true)
+    # snr_check = check_snr(phase_unwrap, phase_true)
+    snr_check = check_snr2(phase_unwrap, noise)
+    return arc_phase, snr_check
 
 
 def v_coef(time_baseline) -> np.ndarray:
@@ -200,6 +204,40 @@ def gauss_noise(signal, SNR):
     return noise
 
 
+def add_gaussian_noise(signal, SNR):
+    """
+    :param signal: 原始信号
+    :param SNR: 添加噪声的信噪比
+    :return: 生成的噪声
+    """
+    noise = np.random.randn(*signal.shape)  # *signal.shape 获取样本序列的尺寸
+    noise = noise - np.mean(noise)
+    signal_power = (1 / signal.shape[0]) * np.sum(np.power(signal, 2))
+    noise_variance = signal_power / np.power(10, (SNR / 10))
+    noise = (np.sqrt(noise_variance) / np.std(noise)) * noise
+
+    return noise
+
+
+def check_snr(signal, noise):
+    Ps = (np.linalg.norm(signal - signal.mean())) ** 2  # signal power
+    Pn = (np.linalg.norm(signal - noise)) ** 2  # noise power
+    snr = 10 * np.log10(Ps / Pn)
+    return snr
+
+
+def check_snr2(signal, noise):
+    """
+    :param signal: 原始信号
+    :param noise: 生成的高斯噪声
+    :return: 返回两者的信噪比
+    """
+    signal_power = (1 / signal.shape[0]) * np.sum(np.power(signal, 2))  # 0.5722037
+    noise_power = (1 / noise.shape[0]) * np.sum(np.power(noise, 2))  # 0.90688
+    SNR = 10 * np.log10(signal_power / noise_power)
+    return SNR
+
+
 def _construct_parameter_space(step: float, Nsearch_max, Nsearch_min, param_orig) -> np.ndarray:
     """create solution searching space
 
@@ -222,7 +260,7 @@ def _construct_parameter_space(step: float, Nsearch_max, Nsearch_min, param_orig
     #                     param_orig+Nsearch*step, step))
     min = param_orig - Nsearch_min * step
     max = param_orig + Nsearch_max * step
-    param_space = np.mat(np.round(np.linspace(min, max, Nsearch_max + Nsearch_min), 4))
+    param_space = np.mat(np.linspace(min, max, Nsearch_max + Nsearch_min + 1))
 
     return param_space
 
