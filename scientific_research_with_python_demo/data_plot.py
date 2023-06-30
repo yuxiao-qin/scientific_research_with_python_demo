@@ -42,7 +42,8 @@ def line_plot(x, y, title, name, x_name):
     plt.ylabel("success_rate", fontsize=14)
     plt.ylim(0, 1)
     # plt.xticks(x)
-    plt.xticks(np.linspace(0.001, 0.2, 5) * 1000)
+    # plt.xticks(np.linspace(0.001, 0.2, 5) * 1000)
+    plt.xticks([10, 30, 50, 70, 90, 110, 130, 150, 170, 190])
     plt.title(title, fontsize=20, y=1.05)
     ax = plt.gca()
     # 坐标轴的边框（脊梁）去掉边框

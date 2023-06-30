@@ -11,10 +11,10 @@ T1 = time.perf_counter()
 # initial parameters
 # ------------------------------------------------
 WAVELENGTH = 0.0056  # [unit:m]
-Nifg = 20
-v_orig = 0.001  # [mm/year] 减少v，也可以改善估计结果，相当于减少了重访周期
+Nifg = 10
+v_orig = 0.05  # [mm/year] 减少v，也可以改善估计结果，相当于减少了重访周期
 h_orig = 30  # [m]，整数 30 循环迭代搜索结果有问题
-noise_level = 70
+noise_level = 50
 # noise_phase = af.sim_phase_noise(noise_level, Nifg)
 step_orig = np.array([1.0, 0.0001])
 std_param = np.array([40, 0.06])
@@ -22,9 +22,9 @@ param_orig = np.array([0, 0])
 param_name = ["height", "velocity"]
 
 # calculate the number of search
-Num_search1_max = 80
+Num_search1_max = 200  # Num_search1 for height
 Num_search1_min = 80
-Num_search2_max = 1600
+Num_search2_max = 1300  # Num_search2 for velocity
 Num_search2_min = 300
 Num_search = np.array([[Num_search1_max, Num_search1_min], [Num_search2_max, Num_search2_min]])
 iteration = 0
@@ -42,32 +42,6 @@ while iteration < 100:
     # ).reshape(1, Nifg)
     time_baseline = np.arange(1, Nifg + 1, 1).reshape(1, Nifg)  # 减小重访周期 dt 能明显改善结果
     # print(time_baseline)
-    # normal_baseline = np.array(
-    #     [
-    #         [
-    #             -235.25094786,
-    #             -427.79160933,
-    #             36.37235105,
-    #             54.3278281,
-    #             -87.27348344,
-    #             25.31470275,
-    #             201.85998322,
-    #             92.22902115,
-    #             244.66603228,
-    #             -89.80792772,
-    #             12.17022031,
-    #             -23.71273067,
-    #             -241.58736045,
-    #             -184.03477855,
-    #             -15.97933883,
-    #             -116.39428378,
-    #             -545.53546226,
-    #             -298.89492777,
-    #             -379.2293736,
-    #             289.30702061,
-    #         ]
-    #     ]
-    # )
     # calculate the input parameters of phase
     v2ph = af.v_coef(time_baseline).T
     h2ph = af.h_coef(normal_baseline).T
@@ -98,14 +72,15 @@ while iteration < 100:
             data_set[key]["Num_search_max"] = 10
             data_set[key]["Num_search_min"] = 10
         count += 1
-    print(est_param)
-    if abs(est_param["height"] - h_orig) < 0.005 and abs(est_param["velocity"] - v_orig) < 0.00025:
+    # print(est_param)
+    if abs(est_param["height"] - h_orig) < 0.01 and abs(est_param["velocity"] - v_orig) < 0.00014:
         success += 1
+        print(est_param)
     est_velocity[iteration] = est_param["velocity"]
     iteration += 1
     # else:
 # success rate
-print(success / iteration)
+print(success / 100)
 # print(est_param)
 # print(est_velocity)
 # np.savetxt("/data/tests/jiaxing/scientific_research_with_python_demo/scientific_research_with_python_demo/data_save/est_velocity.txt", est_velocity)

@@ -422,7 +422,7 @@ def index2sub(best_index, num_search):
     best_index : int
         Linear indexe of best
     num_search : int
-        size of serached paramters v and h
+        size of serached paramters h and v
 
     Returns
     -------
@@ -455,7 +455,7 @@ def compute_param(param_index, step, param_orig, num_search):
         (v,h) of max coherence each iterations
     """
 
-    param = param_orig + (param_index + 1 - num_search) * step
+    param = param_orig + (param_index - num_search) * step
 
     return param
 

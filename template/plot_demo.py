@@ -45,17 +45,23 @@ import csv
 # # dp.mutil_line(dt, y, "dt_SNR_20", "dt", "Nifg=20")
 # dv = np.linspace(0.01, 0.1, 10)
 # y = np.concatenate((y1, y2, y3, y4, y5, y6, y7, y8, y9), axis=1).T
-
 # print(y)
 # dp.mutil_line(dv, y, "dt_v_snr70", "v/mm/year", "Nifg=10,20,30,SNR=70db")
+
 # success_rate = np.loadtxt("/data/tests/jiaxing/scientific_research_with_python_demo/scientific_research_with_python_demo/data_save/snr_v_test5.txt", delimiter=",")
 # v_orig = np.linspace(0.001, 0.2, 200)
 # dp.bar_plot(v_orig * 1000, success_rate, "Nifg=10,SNR=80db,dt=12", "snr_v_test5", 0.001 * 1000, "v[mm/year]")
 # dp.line_plot(v_orig * 1000, success_rate, "Nifg=10,SNR=80db,dt=12", "snr_v_test6", "v[mm/year]")
-Nifg_orig = np.linspace(10, 50, 41, dtype=int)
-est_data = np.loadtxt("/data/tests/jiaxing/scientific_research_with_python_demo/scientific_research_with_python_demo/data_save/Nifg_70_correct.csv", delimiter=",")
-success_rate = est_data[80, 0:41]
 
-print(success_rate.shape)
-print(Nifg_orig.shape)
-dp.bar_plot(Nifg_orig, success_rate, "SNR=70,dt=12,v=0.05,h=30", "Nifg_70", 1, "Nifg")
+# Nifg_orig = np.linspace(10, 50, 41, dtype=int)
+# est_data = np.loadtxt("/data/tests/jiaxing/scientific_research_with_python_demo/scientific_research_with_python_demo/data_save/Nifg_70_correct.csv", delimiter=",")
+# success_rate = est_data[80, 0:41]
+
+# print(success_rate.shape)
+# print(Nifg_orig.shape)
+# dp.bar_plot(Nifg_orig, success_rate, "SNR=70,dt=12,v=0.05,h=30", "Nifg_70", 1, "Nifg")
+
+success_rate = np.loadtxt("/data/tests/jiaxing/scientific_research_with_python_demo/scientific_research_with_python_demo/data_save/snr_h_test1.txt", delimiter=",")
+h_orig = np.arange(10, 201, 1)
+# dp.bar_plot(h_orig, success_rate, "Nifg=10,SNR=70db,dt=12,v=0.05", "snr_h_test1", 1, "h/m")
+dp.line_plot(h_orig, success_rate, "Nifg=10,SNR=70db,dt=12,v=0.05", "snr_h_test2", "h/m")

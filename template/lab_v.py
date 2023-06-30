@@ -88,7 +88,7 @@ for i in range(len(v_orig)):
     # print(success / iteration)
     success_rate[i] = success / iteration
 print(success_rate)
-# np.savetxt("/data/tests/jiaxing/scientific_research_with_python_demo/scientific_research_with_python_demo/data_save/snr_v_test5.txt", success_rate)
+np.savetxt("/data/tests/jiaxing/scientific_research_with_python_demo/scientific_research_with_python_demo/data_save/snr_v_test5.txt", success_rate)
 T2 = time.perf_counter()
 print("程序运行时间:%s秒" % (T2 - T1))
 dp.bar_plot(v_orig * 1000, success_rate, "Nifg=10,SNR=70db,dt=12", "snr_v_test5", 0.001 * 1000, "v[mm/year]")
