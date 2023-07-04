@@ -39,7 +39,5 @@ y_01 = np.array([[29.99, 0.0499]]).T
 # 合并phase_obs和y_0
 y_1 = np.concatenate((phase_obs, y_00), axis=0)
 y_2 = np.concatenate((phase_obs, y_01), axis=0)
-coef, residuals, rank, singular_values = np.linalg.lstsq(A, y_1, rcond=None)
-print(coef)
-# coef, residuals, rank, singular_values = np.linalg.lstsq(A, y_2, rcond=None)
-# print(coef)
+x = np.linalg.inv(A).dot(y_1)
+print(x)
