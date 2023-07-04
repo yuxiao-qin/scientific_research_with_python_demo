@@ -2,31 +2,44 @@ import scientific_research_with_python_demo.scientific_research_with_python_demo
 import numpy as np
 
 WAVELENGTH = 0.0056  # [unit:m]
-Nifg = 50
+Nifg = 3
 v_orig = 0.05  # [mm/year] 减少v，也可以改善估计结果，相当于减少了重访周期
 h_orig = 30  # [m]，整数 30 循环迭代搜索结果有问题
-noise_level = 70
+noise_level = 100
 param_name = ["height", "velocity"]
 normal_baseline = np.random.normal(size=(1, Nifg)) * 333
 # print(normal_baseline)
 time_baseline = np.arange(1, Nifg + 1, 1).reshape(1, Nifg)  # 减小重访周期 dt 能明显改善结果
+m2ph = 4 * np.pi / WAVELENGTH
 # calculate the input parameters of phase
 v2ph = af.v_coef(time_baseline).T
 h2ph = af.h_coef(normal_baseline).T
-# print(h2ph)
-par2ph = [h2ph, v2ph]
-par2ph1 = np.hstack((h2ph, v2ph))
+print(h2ph)
+# 合并两个数组v2ph和h2ph
+par2ph = np.concatenate((h2ph, v2ph), axis=1) * m2ph
+print(par2ph.shape)
+print(par2ph)
 a_mat = 2 * np.pi * np.eye(Nifg)
-A = np.hstack((par2ph1, a_mat))
-phase_obs = af.sim_arc_phase(v_orig, h_orig, v2ph, h2ph)
-# simulate noise phase
-noise_phase = af.gauss_noise(phase_obs, noise_level)
-phase_obs += noise_phase
-# 使用lstsq函数计算最小二乘解
-coef, residuals, rank, singular_values = np.linalg.lstsq(A, phase_obs, rcond=None)
-
-# 输出最小二乘解
-print(coef)
-# print(par2ph)
+# 合并a_mat和par2ph
+A_1 = np.concatenate((a_mat, par2ph), axis=1)
+print(A_1.shape)
+print(A_1)
+P = np.concatenate((np.zeros((2, Nifg)), np.eye(2)), axis=1)
+print(P.shape)
+# 合并par2ph和P
+A = np.concatenate((A_1, P), axis=0)
 print(A.shape)
-# 最小二乘法估计
+print(A)
+# print(A[19][19])
+phase_obs, srn, phase_true = af.sim_arc_phase(v_orig, h_orig, v2ph, h2ph, noise_level)
+print(phase_true)
+print(phase_obs)
+y_00 = np.array([[30, 0.05]]).T
+y_01 = np.array([[29.99, 0.0499]]).T
+# 合并phase_obs和y_0
+y_1 = np.concatenate((phase_obs, y_00), axis=0)
+y_2 = np.concatenate((phase_obs, y_01), axis=0)
+coef, residuals, rank, singular_values = np.linalg.lstsq(A, y_1, rcond=None)
+print(coef)
+# coef, residuals, rank, singular_values = np.linalg.lstsq(A, y_2, rcond=None)
+# print(coef)

@@ -14,7 +14,7 @@ WAVELENGTH = 0.0056  # [unit:m]
 Nifg = 10
 v_orig = 0.05  # [mm/year] 减少v，也可以改善估计结果，相当于减少了重访周期
 h_orig = 30  # [m]，整数 30 循环迭代搜索结果有问题
-noise_level = 50
+noise_level = 70
 # noise_phase = af.sim_phase_noise(noise_level, Nifg)
 step_orig = np.array([1.0, 0.0001])
 std_param = np.array([40, 0.06])
@@ -31,7 +31,7 @@ iteration = 0
 success = 0
 est_velocity = np.zeros(100)
 # std_param = {"height": 40, "velocity": 0.1}
-while iteration < 100:
+while iteration < 1:
     # simulate baseline
     normal_baseline = np.random.normal(size=(1, Nifg)) * 333
     # print(normal_baseline)
@@ -47,8 +47,9 @@ while iteration < 100:
     h2ph = af.h_coef(normal_baseline).T
     # print(h2ph)
     par2ph = [h2ph, v2ph]
+    print(par2ph)
     # phase_obsearvation simulate
-    phase_obs, snr = af.sim_arc_phase(v_orig, h_orig, v2ph, h2ph, noise_level)
+    phase_obs, snr, phase_true = af.sim_arc_phase(v_orig, h_orig, v2ph, h2ph, noise_level)
     # print(snr)
     # print(phase_obs)
     # normalize the intput parameters

@@ -103,7 +103,7 @@ def sim_arc_phase(v: float, h: float, v2ph, h2ph: float, SNR) -> np.ndarray:
     arc_phase = wrap_phase(phase_true)
     # snr_check = check_snr(phase_unwrap, phase_true)
     snr_check = check_snr2(phase_unwrap, noise)
-    return arc_phase, snr_check
+    return arc_phase, snr_check, phase_true
 
 
 def v_coef(time_baseline) -> np.ndarray:
@@ -258,9 +258,9 @@ def _construct_parameter_space(step: float, Nsearch_max, Nsearch_min, param_orig
 
     # parm_space = np.mat(np.arange(param_orig-Nsearch*step,
     #                     param_orig+Nsearch*step, step))
-    min = param_orig - Nsearch_min * step
-    max = param_orig + Nsearch_max * step
-    param_space = np.mat(np.linspace(min, max, Nsearch_max + Nsearch_min + 1))
+    min = np.round(param_orig - Nsearch_min * step, 8)
+    max = np.round(param_orig + Nsearch_max * step, 8)
+    param_space = np.mat(np.round(np.linspace(min, max, Nsearch_max + Nsearch_min + 1), 8))
 
     return param_space
 
