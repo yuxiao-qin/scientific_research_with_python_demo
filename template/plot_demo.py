@@ -1,4 +1,4 @@
-import scientific_research_with_python_demo.scientific_research_with_python_demo.data_plot as dp
+import scientific_research_with_python_demo.data_plot as dp
 import numpy as np
 import csv
 

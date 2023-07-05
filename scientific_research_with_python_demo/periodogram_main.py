@@ -1,4 +1,4 @@
-import scientific_research_with_python_demo.scientific_research_with_python_demo.utils as utils
+import scientific_research_with_python_demo.utils as utils
 
 
 def periodogram(data: dict, phase_obs):

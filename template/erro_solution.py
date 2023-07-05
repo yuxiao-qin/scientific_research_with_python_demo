@@ -1,6 +1,6 @@
 import numpy as np
-import scientific_research_with_python_demo.scientific_research_with_python_demo.utils as af
-from scientific_research_with_python_demo.scientific_research_with_python_demo.periodogram_main import periodogram
+import scientific_research_with_python_demo.utils as af
+from scientific_research_with_python_demo.periodogram_main import periodogram
 
 Nifg = 20
 normal_baseline = np.fromfile(

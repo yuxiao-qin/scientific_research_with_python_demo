@@ -1,4 +1,4 @@
-import scientific_research_with_python_demo.scientific_research_with_python_demo.utils as af
+import scientific_research_with_python_demo.utils as af
 import numpy as np
 
 param = np.array([10, 0.2])

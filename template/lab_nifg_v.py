@@ -1,8 +1,8 @@
-import scientific_research_with_python_demo.scientific_research_with_python_demo.utils as af
-from scientific_research_with_python_demo.scientific_research_with_python_demo.periodogram_main import periodogram
+import scientific_research_with_python_demo.utils as af
+from scientific_research_with_python_demo.periodogram_main import periodogram
 import numpy as np
 import time
-from scientific_research_with_python_demo.scientific_research_with_python_demo.data_plot import bar_plot
+from scientific_research_with_python_demo.data_plot import bar_plot
 
 # Nifg 的实验
 T1 = time.perf_counter()
@@ -42,32 +42,6 @@ for j in range(len(v)):
             # print(normal_baseline)
             time_baseline = np.arange(1, Nifg + 1, 1).reshape(1, Nifg)  # 减小重访周期 dt 能明显改善结果
             # print(time_baseline)
-            # normal_baseline = np.array(
-            #     [
-            #         [
-            #             -235.25094786,
-            #             -427.79160933,
-            #             36.37235105,
-            #             54.3278281,
-            #             -87.27348344,
-            #             25.31470275,
-            #             201.85998322,
-            #             92.22902115,
-            #             244.66603228,
-            #             -89.80792772,
-            #             12.17022031,
-            #             -23.71273067,
-            #             -241.58736045,
-            #             -184.03477855,
-            #             -15.97933883,
-            #             -116.39428378,
-            #             -545.53546226,
-            #             -298.89492777,
-            #             -379.2293736,
-            #             289.30702061,
-            #         ]
-            #     ]
-            # )
             # calculate the input parameters of phase
             v2ph = af.v_coef(time_baseline).T
             h2ph = af.h_coef(normal_baseline).T

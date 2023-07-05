@@ -2,8 +2,8 @@ import pytest
 import sys
 
 sys.path.append("/data/tests/jiaxing/scientific_research_with_python_demo/scientific_research_with_python_demo")
-import scientific_research_with_python_demo.scientific_research_with_python_demo.utils as af
-import scientific_research_with_python_demo.scientific_research_with_python_demo.periodogram_main as pm
+import scientific_research_with_python_demo.utils as af
+import scientific_research_with_python_demo.periodogram_main as pm
 import numpy as np
 
 

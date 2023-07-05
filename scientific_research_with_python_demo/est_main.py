@@ -1,6 +1,6 @@
-import scientific_research_with_python_demo.scientific_research_with_python_demo.utils as af
-from scientific_research_with_python_demo.scientific_research_with_python_demo.periodogram_main import periodogram
-import scientific_research_with_python_demo.scientific_research_with_python_demo.data_plot as dp
+import scientific_research_with_python_demo.utils as af
+from scientific_research_with_python_demo.periodogram_main import periodogram
+import scientific_research_with_python_demo.data_plot as dp
 import numpy as np
 
 

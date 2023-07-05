@@ -603,3 +603,15 @@ def data_prepare(params):
         params["std_h"] = np.linspace(params["std_h_range"][0], params["std_h_range"][1], 100)
 
     return params
+
+
+def design_mat(h2ph, v2ph, phase_obs, pseudo_param):
+    Nifg = len(phase_obs)
+    par2ph = np.hstack((h2ph, v2ph)) * m2ph
+    a_mat = 2 * np.pi * np.eye(Nifg)
+    A_1 = np.hstack((a_mat, par2ph))
+    P = np.hstack((np.zeros((2, Nifg)), np.eye(2)))
+    A_design = np.vstack((A_1, P))
+    y = np.vstack((phase_obs, pseudo_param))
+
+    return A_design, y

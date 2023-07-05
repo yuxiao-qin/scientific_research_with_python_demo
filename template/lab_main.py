@@ -1,6 +1,6 @@
-import scientific_research_with_python_demo.scientific_research_with_python_demo.utils as af
-import scientific_research_with_python_demo.scientific_research_with_python_demo.data_plot as dp
-from scientific_research_with_python_demo.scientific_research_with_python_demo.est_main import est_af
+import scientific_research_with_python_demo.utils as af
+import scientific_research_with_python_demo.data_plot as dp
+from scientific_research_with_python_demo.est_main import est_af
 import numpy as np
 import sys
 

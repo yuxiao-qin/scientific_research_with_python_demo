@@ -2,5 +2,39 @@
     "[python]": {
         "editor.defaultFormatter": "ms-python.black-formatter"
     },
-    "python.formatting.provider": "none"
+    "python.formatting.provider": "none",
+    "search.exclude": {
+        "**/node_modules": true,
+        "**/bower_components": true, //默认配置
+        "project_test1/": true, //被禁止搜寻的文件/文件夹
+        "project_test/": true,
+        "gecoris_test/": true,
+        "project_gecoris/": true,
+    },
+    "files.exclude": {
+        "**/.git": true,
+        "**/.svn": true,
+        "**/.hg": true,
+        "**/CVS": true,
+        "**/.DS_Store": true, //默认配置
+        "project_test1/": true, //被禁止搜寻的文件/文件夹
+        "project_test/": true,
+        "gecoris_test/": true,
+        "project_gecoris/": true,
+    },
+    "files.watcherExclude": {
+        "**/.git/objects/**": true,
+        "**/.git/subtree-cache/**": true,
+        "**/node_modules/*/**": true,
+        "**/.dim": true,
+        "project_test1/": true, //被禁止搜寻的文件/文件夹
+        "project_test/": true,
+        "gecoris_test/": true,
+        "project_gecoris/": true,
+    },
+    "python.testing.pytestArgs": [
+        "."
+    ],
+    "python.testing.unittestEnabled": false,
+    "python.testing.pytestEnabled": true
 }
