@@ -2,11 +2,10 @@ import numpy as np
 
 
 # Constant
-WAVELENGTH = 0.0056  # [unit:m]
+WAVELENGTH = 0.056  # [unit:m]
 H = 780000  # satellite vertical height[m]
 Incidence_angle = 23 * np.pi / 180  # the local incidence angle
 R = H / np.cos(Incidence_angle)  # range to the master antenna. test
-Nifg = 20
 m2ph = 4 * np.pi / WAVELENGTH
 
 
@@ -103,7 +102,7 @@ def sim_arc_phase(v: float, h: float, v2ph, h2ph: float, SNR) -> np.ndarray:
     arc_phase = wrap_phase(phase_true)
     # snr_check = check_snr(phase_unwrap, phase_true)
     snr_check = check_snr2(phase_unwrap, noise)
-    return arc_phase, snr_check, phase_true
+    return arc_phase, snr_check, phase_unwrap
 
 
 def v_coef(time_baseline) -> np.ndarray:
@@ -367,10 +366,8 @@ def simulate_temporal_coherence(arc_phase, search_space) -> np.ndarray:
     search_size = search_space.shape[1]
     # resdual_phase = phase_observation - phase_model
     coh_phase = arc_phase * np.ones((1, search_size)) - search_space
-
-    size_c = coh_phase.shape
+    Nifg = len(arc_phase)
     coh_t = np.sum(np.exp(1j * coh_phase), axis=0) / Nifg
-    size_t = coh_t.shape
     # coherence = γ=|(1/Nifgs)Σexp(j*(φ0s_obs-φ0s_modle))|
 
     return coh_t
@@ -455,7 +452,7 @@ def compute_param(param_index, step, param_orig, num_search):
         (v,h) of max coherence each iterations
     """
 
-    param = param_orig + (param_index - num_search) * step
+    param = np.round(param_orig + (param_index - num_search) * step, 8)
 
     return param
 
@@ -615,3 +612,21 @@ def design_mat(h2ph, v2ph, phase_obs, pseudo_param):
     y = np.vstack((phase_obs, pseudo_param))
 
     return A_design, y
+
+
+def cov_obs(sig2, std_param):
+    Q_y1 = np.diag(sig2)
+    Q_y2 = np.diag(std_param)
+    Q_0 = np.zeros((len(sig2), len(std_param)))
+    Q_up = np.hstack((Q_y1, Q_0))
+    Q_down = np.hstack((Q_0.T, Q_y2))
+    Q_y = np.vstack((Q_up, Q_down))
+    return Q_y
+
+
+def cov_ahat(C, Q_y, Nifg):
+    C_1 = np.linalg.inv(C)
+    Q_chat = np.dot(C_1, np.dot(Q_y, C_1.T))
+    # 取Q_chat n行到n列的元素
+    Q_ahat = Q_chat[0:Nifg, 0:Nifg]
+    return Q_ahat

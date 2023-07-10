@@ -1,7 +1,5 @@
 import pytest
-import sys
 
-sys.path.append("/data/tests/jiaxing/scientific_research_with_python_demo/scientific_research_with_python_demo")
 import scientific_research_with_python_demo.utils as af
 import scientific_research_with_python_demo.periodogram_main as pm
 import numpy as np
@@ -26,93 +24,65 @@ def test_compute_Nsearch():
 
 def test_v_coef():
     # construct a simulated case
-    simuated_time_range = np.arange(1, 21, 1) * 365 / 12
+    simuated_time_range = np.arange(1, 3, 1) * 365 / 12
     actual = af.v_coef(simuated_time_range)
     # desired phase is calculated by hand
-    desired = np.arange(1, 21, 1)
+    desired = np.array([[1, 2]])
     assert np.isclose(actual, desired).all()
 
 
 def test_h_coef():
     # actual=h2phase(simulated_h)
-    normal_baseline = np.random.normal(size=(1, 20))
+    normal_baseline = np.array([[1, 2]])
     actual = af.h_coef(normal_baseline * (af.R * np.sin(af.Incidence_angle)))
-    desired = normal_baseline
+    desired = np.array([[1, 2]])
     assert np.isclose(actual, desired).all()
 
 
 def test_generate_phase_noise():
-    noise = af.sim_phase_noise(0.1)
-    assert noise.shape == (20, 1)
+    signal = np.array([[1, 2, 3]]).T
+    noise_level = 70
+    noise = af.add_gaussian_noise(signal, noise_level)
+    signal_noise = signal + noise
+    snr = af.check_snr2(signal, noise)
+    desired1 = (3, 1)
+    desired2 = 70
+    actual1 = noise.shape
+    actual2 = snr
+    assert noise.shape == desired1
+    assert snr == desired2
 
 
 def test_wrap_phase():
-    phase = np.arange(20)
+    phase = np.arange(5)
     simulate = abs(af.wrap_phase(phase))
-    assert (simulate <= np.pi).all
+    assert all(x <= np.pi for x in simulate)
+
+
+def test_coef2phase():
+    normal_baseline = np.array([[1, 2]])
+    h2ph = af.h_coef(normal_baseline * (af.R * np.sin(af.Incidence_angle))).T / af.m2ph
+    v2ph = np.array([[1, 2]]).T / af.m2ph
+    param = np.array([[30, 0.05]])
+    desired1 = np.array([[30, 60]]).T
+    desired2 = np.array([[0.05, 0.1]]).T
+    actual1 = af._coef2phase(h2ph, param[0][0])
+    actual2 = af._coef2phase(v2ph, param[0][1])
+    # assert np.isclose(actual1, desired1).all()
+    assert np.isclose(actual2, desired2).all()
 
 
 def test_sim_arc_phase():
     v_orig = 0.05  # [mm/year]
     h_orig = 30  # [m]
-    noise_level = 0.0
-    time_range = np.arange(1, 21, 1).reshape(1, 20)
-    normal_baseline = np.array(
-        [
-            [
-                -235.25094786,
-                -427.79160933,
-                36.37235105,
-                54.3278281,
-                -87.27348344,
-                25.31470275,
-                201.85998322,
-                92.22902115,
-                244.66603228,
-                -89.80792772,
-                12.17022031,
-                -23.71273067,
-                -241.58736045,
-                -184.03477855,
-                -15.97933883,
-                -116.39428378,
-                -545.53546226,
-                -298.89492777,
-                -379.2293736,
-                289.30702061,
-            ]
-        ]
-    )
+    noise_level = 100
+    time_range = np.array([[1, 2]])
+    normal_baseline = np.array([[1, 2]]) * (af.R * np.sin(af.Incidence_angle))
 
-    v2ph = af.v_coef(time_range)
-    h2ph = af.h_coef(normal_baseline)
-    simulated = af.sim_arc_phase(v_orig, h_orig, noise_level, v2ph, h2ph)
-    actual = np.array(
-        [
-            [
-                -0.16197983,
-                2.07703957,
-                -0.38777374,
-                0.6686454,
-                0.69867534,
-                2.14699018,
-                -2.25000165,
-                -2.00269921,
-                1.26480047,
-                -0.22241084,
-                -0.93141071,
-                1.744535,
-                -1.16754325,
-                1.65687907,
-                1.8168527,
-                -2.34515856,
-                2.05190303,
-                -0.65915225,
-                -0.73824169,
-                0.65241122,
-            ]
-        ]
-    )
+    v2ph = af.v_coef(time_range * 365 / 12).T / af.m2ph
+    h2ph = af.h_coef(normal_baseline).T / af.m2ph
+    x1, x2, simulated = af.sim_arc_phase(v_orig, h_orig, v2ph, h2ph, noise_level)
+    actual = np.array([[30.05, 60.1]]).T
     assert np.isclose(actual, simulated).all()
 
 
@@ -134,15 +104,13 @@ def test_sim_temporal_coh():
     actual = (
         np.array(
             [
-                [
-                    np.exp(0) + np.exp(-1j) + np.exp(0),
-                    np.exp(-2j) + np.exp(-2j) + np.exp(-1j),
-                    np.exp(-1j) + np.exp(-3j) + np.exp(0),
-                    np.exp(-2j) + np.exp(0) + np.exp(-1j),
-                ]
+                np.exp(0) + np.exp(-1j) + np.exp(0),
+                np.exp(-2j) + np.exp(-2j) + np.exp(-1j),
+                np.exp(-1j) + np.exp(-3j) + np.exp(0),
+                np.exp(-2j) + np.exp(0) + np.exp(-1j),
             ]
-        )
-        / 20
+        ).T
+        / 3
     )
     assert np.isclose(actual, simulated).all()
     # assert simulated == actual

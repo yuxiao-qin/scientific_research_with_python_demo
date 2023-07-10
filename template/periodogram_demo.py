@@ -10,8 +10,8 @@ T1 = time.perf_counter()
 # ------------------------------------------------
 # initial parameters
 # ------------------------------------------------
-WAVELENGTH = 0.0056  # [unit:m]
-Nifg = 10
+WAVELENGTH = 0.056  # [unit:m]
+Nifg = 2
 v_orig = 0.05  # [mm/year] 减少v，也可以改善估计结果，相当于减少了重访周期
 h_orig = 30  # [m]，整数 30 循环迭代搜索结果有问题
 noise_level = 70
@@ -47,14 +47,14 @@ while iteration < 1:
     h2ph = af.h_coef(normal_baseline).T
     # print(h2ph)
     par2ph = [h2ph, v2ph]
-    print(par2ph)
+    print(par2ph[0].shape)
     # phase_obsearvation simulate
     phase_obs, snr, phase_true = af.sim_arc_phase(v_orig, h_orig, v2ph, h2ph, noise_level)
     # print(snr)
     # print(phase_obs)
     # normalize the intput parameters
     data_set = af.input_parameters(par2ph, step_orig, Num_search, param_orig, param_name)
-    # print(data_set)
+    print(data_set)
     # print(data_set["velocity"]["Num_search"])
     # ------------------------------------------------
     # main loop of searching
@@ -73,7 +73,7 @@ while iteration < 1:
             data_set[key]["Num_search_max"] = 10
             data_set[key]["Num_search_min"] = 10
         count += 1
-    # print(est_param)
+    print(est_param)
     if abs(est_param["height"] - h_orig) < 0.01 and abs(est_param["velocity"] - v_orig) < 0.00014:
         success += 1
         print(est_param)
