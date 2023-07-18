@@ -127,6 +127,13 @@ def v_coef(time_baseline) -> np.ndarray:
     return v2phase_coefficeint
 
 
+def time_baseline_dt(Nifg, time_range):
+    dt = time_range / Nifg
+    time = np.arange(1, Nifg + 1, 1).reshape(1, Nifg) * dt / 365
+
+    return time, dt
+
+
 def h_coef(normal_baseline: float) -> np.ndarray:
     """caculate h2phase factor
 
@@ -193,14 +200,19 @@ def sim_phase_noise(noise_level: float, Nifg) -> np.ndarray:
     return noise
 
 
-def gauss_noise(signal, SNR):
+def gauss_noise(signal, noise_level):
     # 给数据加指定SNR的高斯噪声
-    noise = np.random.randn(signal.shape[0], signal.shape[1])  # 产生N(0,1)噪声数据
-    noise = noise - np.mean(noise)  # 均值为0
-    signal_power = np.linalg.norm(signal - signal.mean()) ** 2 / signal.size  # 此处是信号的std**2
-    noise_variance = signal_power / (10 ** (SNR / 10))  # 此处是噪声的std**2
-    noise = (np.sqrt(noise_variance) / np.std(noise)) * noise  # 此处是噪声的std**2
-    return noise
+    noise_lv = np.zeros((signal.size + 1, 1))
+    noise_std = np.zeros((signal.size + 1, 1))
+    noise_lv[0] = noise_level
+    noise_std[0] = np.random.randn(1) * noise_lv[0]
+    noise_ph = np.zeros((signal.size, 1))
+    for i in range(signal.shape[0]):
+        noise_lv[i + 1] = np.random.randn(1) * (np.pi * 5 / 180) + noise_level  # 产生N(0,1)噪声数据
+        noise_std[i + 1] = np.multiply(np.random.randn(1), noise_lv[i + 1])
+        noise_ph[i] = noise_std[0] + noise_std[i + 1]
+
+    return noise_ph
 
 
 def add_gaussian_noise(signal, SNR):
@@ -259,7 +271,7 @@ def _construct_parameter_space(step: float, Nsearch_max, Nsearch_min, param_orig
     #                     param_orig+Nsearch*step, step))
     min = np.round(param_orig - Nsearch_min * step, 8)
     max = np.round(param_orig + Nsearch_max * step, 8)
-    param_space = np.mat(np.round(np.linspace(min, max, Nsearch_max + Nsearch_min + 1), 8))
+    param_space = np.round(np.linspace(min, max, Nsearch_max + Nsearch_min + 1), 8)
 
     return param_space
 
@@ -367,7 +379,7 @@ def simulate_temporal_coherence(arc_phase, search_space) -> np.ndarray:
     # resdual_phase = phase_observation - phase_model
     coh_phase = arc_phase * np.ones((1, search_size)) - search_space
     Nifg = len(arc_phase)
-    coh_t = np.sum(np.exp(1j * coh_phase), axis=0) / Nifg
+    coh_t = np.sum(np.exp(1j * coh_phase), axis=0, keepdims=True) / Nifg
     # coherence = γ=|(1/Nifgs)Σexp(j*(φ0s_obs-φ0s_modle))|
 
     return coh_t
@@ -473,7 +485,7 @@ def correct_h2ph(h2ph, n):
         correcting factor as of result of using  mean_h2ph to estimate parameters
     """
     mean_h2ph = np.mean(h2ph, axis=1)
-    factors = h2ph[n, :] / mean_h2ph
+    factors = h2ph[:, n] / mean_h2ph
     correct_factor = np.median(factors)
 
     return correct_factor

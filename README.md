@@ -16,7 +16,7 @@ The latest function of perriodogram aims at singal arc estimation.
 - ### Example inputs
 - #### initial parameters
 {
-WAVELENGTH = 0.0056  # [unit:m]
+WAVELENGTH = 0.056  # [unit:m]
 Nifg = 10
 v_orig = 0.05  # [mm/year] 减少v，也可以改善估计结果，相当于减少了重访周期
 h_orig = 30  # [m]，整数 30 循环迭代搜索结果有问题
@@ -58,7 +58,7 @@ Num_search = np.array([[Num_search1_max, Num_search1_min], [Num_search2_max, Num
 
 - ### Example inputs
     {
-    WAVELENGTH = 0.0056  # [unit:m]
+    WAVELENGTH = 0.056  # [unit:m]
     Nifg = 10
     h_orig = 30  # [m]，整数 30 循环迭代搜索结果有问题
     noise_level = 80
@@ -85,7 +85,7 @@ This is similar to the experiments of deformation rate v .
 You need to use the 'np.linspace' to get an array of resudual height 'h_orig' based on fixed step.
 - ### Example inputs
     {
-    WAVELENGTH = 0.0056  # [unit:m]
+    WAVELENGTH = 0.056  # [unit:m]
     Nifg_orig = np.linspace(10, 50, 41, dtype=int)
     v_orig = 0.05  # [mm/year] 减少v，也可以改善估计结果，相当于减少了重访周期
     h_orig = 30  # [m]，整数 30 循环迭代搜索结果有问题

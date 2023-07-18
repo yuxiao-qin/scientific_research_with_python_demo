@@ -54,7 +54,7 @@ def periodogram(data: dict, phase_obs):
     # search_size=[serach_sizeH,serach_sizeV]
     s1 = search["height"]
     s2 = search["velocity"]
-    search_size = [s1.shape[1], s2.shape[1]]
+    search_size = [s1.size, s2.size]
     # ---------------------------------------------------------
     # step 2:construct model_phase by using kronecker积 based on (v,h) pairs
     # ---------------------------------------------------------

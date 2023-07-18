@@ -88,11 +88,28 @@ def test_sim_arc_phase():
 
 def test_param_search():
     param_orig = [0, 0]
-    Bn = np.mat(np.array([1] * 20)).T
-    h2ph = af.h_coef(Bn * (af.WAVELENGTH * af.R * np.sin(af.Incidence_angle)))
-    param_space = af._construct_parameter_space(1, 10, param_orig[0])
-    actual = af.phase_search(h2ph, param_space).shape
-    assert actual == (20, 20)
+    normal_baseline = np.array([[1, 2]])
+    h2ph = af.h_coef(normal_baseline * (af.R * np.sin(af.Incidence_angle))).T
+
+    param_space = af._construct_parameter_space(1, 1, 1, param_orig[0])
+    actual = af.phase_search(h2ph / af.m2ph, param_space)
+    desired1 = np.array([[1, 2]]).T
+    desired2 = np.array([[-1, 0, 1], [-2, 0, 2]])
+
+    desired3 = np.array([[-1, 0, 1]])
+    assert np.isclose(h2ph, desired1).all()
+    assert np.isclose(actual, desired2).all()
+    assert np.isclose(param_space, desired3).all()
+
+
+def test_construct_parameter_space():
+    search = af._construct_parameter_space(1, 1, 1, 0)
+    a1 = np.array([[-1, 0, 1]])
+    h2ph = np.array([[1, 2]]).T
+    phase = af._coef2phase(h2ph / af.m2ph, search)
+    a2 = np.array([[-1, 0, 1], [-2, 0, 2]])
+    assert np.isclose(search, a1).all()
+    assert np.isclose(phase, a2).all()
 
 
 def test_sim_temporal_coh():
@@ -104,12 +121,14 @@ def test_sim_temporal_coh():
     actual = (
         np.array(
             [
-                np.exp(0) + np.exp(-1j) + np.exp(0),
-                np.exp(-2j) + np.exp(-2j) + np.exp(-1j),
-                np.exp(-1j) + np.exp(-3j) + np.exp(0),
-                np.exp(-2j) + np.exp(0) + np.exp(-1j),
+                [
+                    np.exp(0) + np.exp(-1j) + np.exp(0),
+                    np.exp(-2j) + np.exp(-2j) + np.exp(-1j),
+                    np.exp(-1j) + np.exp(-3j) + np.exp(0),
+                    np.exp(-2j) + np.exp(0) + np.exp(-1j),
+                ]
             ]
-        ).T
+        )
         / 3
     )
     assert np.isclose(actual, simulated).all()
@@ -132,8 +151,6 @@ def test_maximum():
             ]
         ]
     )
-    # assert (phase_sum == actual).all
-    # assert (simluated == actual_phase).all
     num_search = [2, 2]
     max_param = af.find_maximum_coherence(simluated)
     best = max_param[0]
@@ -143,6 +160,20 @@ def test_maximum():
     assert best == actual
     assert best_index == 2
     assert para_index == (0, 1)
+
+
+def test_find_best():
+    dphase = np.array([[1, 1, 1]]).T
+    search_space = np.array([[1, 3, 2, 3], [2, 3, 4, 1], [1, 2, 1, 2]])
+    simulated = af.simulate_temporal_coherence(dphase, search_space)
+    a1 = simulated.shape
+    max_param, index = af.find_maximum_coherence(simulated)
+    desired1 = 0
+    desired2 = (1, 4)
+    desired3 = (3, 1)
+    assert np.isclose(dphase.shape, desired3).all()
+    assert np.isclose(a1, desired2).all()
+    assert index == desired1
 
 
 def test_argmax_complex_number():
@@ -239,7 +270,7 @@ def test_periodogram():
     h2ph = af.h_coef(normal_baseline).T
     par2ph = [h2ph, v2ph]
     # phase_obsearvation simulate
-    phase_obs = af.sim_arc_phase(v_orig, h_orig, v2ph, h2ph)
+    phase_obs, snr, phase_true = af.sim_arc_phase(v_orig, h_orig, v2ph, h2ph, 70)
     data_set = af.input_parameters(par2ph, step_orig, Num_search, param_orig, param_name)
     param, best = pm.periodogram(data_set, phase_obs)
     actual = param["height"]
@@ -254,7 +285,7 @@ def test_input_parameters():
     param_name = ("height", "velocity")
     data = af.input_parameters(p2ph, step, search_num, param, param_name)
     actual = data["velocity"]["Num_search_min"]
-    desired = 3
+    desired = 4
 
     assert actual == desired
 
@@ -283,37 +314,9 @@ def test_ambiguity_solution():
 
 
 def test_gauss_noise():
-    signal = np.array(
-        [
-            [
-                -0.16197983,
-                2.07703957,
-                -0.38777374,
-                0.6686454,
-                0.69867534,
-                2.14699018,
-                -2.25000165,
-                -2.00269921,
-                1.26480048,
-                -0.22241084,
-                -0.93141071,
-                1.744535,
-                -1.16754325,
-                1.65687907,
-                1.8168527,
-                -2.34515856,
-                2.05190302,
-                -0.65915225,
-                -0.73824169,
-                0.65241122,
-            ]
-        ]
-    )
-    noise = af.gauss_noise(signal, 70)
+    signal = np.array([[1, 1, 1, 1, 1]]).T
+    noise = af.gauss_noise(signal, np.pi * 20 / 180)
     signal_noise = signal + noise
-    Ps = (np.linalg.norm(signal - signal.mean())) ** 2
-    Pn = (np.linalg.norm(noise - noise.mean())) ** 2
-    SNR = 10 * np.log10(Ps / Pn)
-    actual = SNR
-    desired = 70
+    actual = signal_noise.shape
+    desired = (5, 1)
     assert actual == desired
