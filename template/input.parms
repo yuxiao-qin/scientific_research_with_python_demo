@@ -1,0 +1,19 @@
+{
+'WAVELENGTH' : 0.0056,  # [unit:m]
+'Nifg_orig' :50,
+'Nifg_range':[20,100],
+'v_orig' : 0.05,  # [mm/year] 减少v，也可以改善估计结果，相当于减少了重访周期
+'v_range':[0.001,0.1],
+'h_orig' : 30 , # [m]，整数 30 循环迭代搜索结果有问题
+'h_range':[40,100],
+'noise_level' : 70,
+'step_orig' : [1.0, 0.001],
+'std_h' : 40 ,
+'std_range_h':[40,100],
+'std_v':0.05,
+'std_range_h':[0.005,0.1],
+'param_orig' : [0, 0],
+'param_name' : ["height", "velocity"],
+'est_flag': 0,
+'plot_flag': 1
+}
