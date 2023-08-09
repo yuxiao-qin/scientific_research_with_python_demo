@@ -642,3 +642,9 @@ def cov_ahat(C, Q_y, Nifg):
     # 取Q_chat n行到n列的元素
     Q_ahat = Q_chat[0:Nifg, 0:Nifg]
     return Q_ahat
+
+
+def compute_ahat(A_design, y):
+    a_hat = np.dot(np.linalg.inv(np.dot(A_design.T, A_design)), np.dot(A_design.T, y))
+
+    return a_hat

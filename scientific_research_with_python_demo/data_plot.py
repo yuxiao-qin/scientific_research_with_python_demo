@@ -18,7 +18,7 @@ def bar_plot(x, y, title, name, dx, x_name):
     plt.xlabel(x_name, fontsize=14)
     plt.ylabel("success_rate", fontsize=14)
     # x轴刻度
-    # plt.xticks(x)
+    plt.xticks(x)
     # plt.xticks(np.linspace(0.001, 0.2, 5) * 1000)
     plt.ylim(0, 1)
     ax = plt.gca()
@@ -36,14 +36,14 @@ def line_plot(x, y, title, name, x_name):
     # 折线图
     plt.figure()
     # plt.rc("font", family="FangSong")
-    plt.plot(x, y, linestyle="-.")
+    plt.plot(x, y, linestyle="-")
     plt.title("Line", fontsize=16)
     plt.xlabel(x_name, fontsize=14)
     plt.ylabel("success_rate", fontsize=14)
     plt.ylim(0, 1)
     # plt.xticks(x)
     # plt.xticks(np.linspace(0.001, 0.2, 5) * 1000)
-    plt.xticks([10, 30, 50, 70, 90, 110, 130, 150, 170, 190])
+    # plt.xticks([10, 30, 50, 70, 90, 110])
     plt.title(title, fontsize=20, y=1.05)
     ax = plt.gca()
     # 坐标轴的边框（脊梁）去掉边框

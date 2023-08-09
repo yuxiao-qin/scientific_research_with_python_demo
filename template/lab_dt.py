@@ -10,12 +10,12 @@ T1 = time.perf_counter()
 # ------------------------------------------------
 # initial parameters
 # ------------------------------------------------
-WAVELENGTH = 0.0056  # [unit:m]
-Nifg = 10
-v_orig = 0.05  # [mm/year] 减少v，也可以改善估计结果，相当于减少了重访周期
+WAVELENGTH = 0.056  # [unit:m]
+Nifg = 20
+v_orig = 0.005  # [mm/year] 减少v，也可以改善估计结果，相当于减少了重访周期
 h_orig = 30  # [m]，整数 30 循环迭代搜索结果有问题
-noise_level = 70
-dt_orig = np.linspace(0.1, 1.0, 10)
+noise_level = 50
+dt_orig = np.arange(1, 301, 1) * 0.01
 # noise_phase = af.sim_phase_noise(noise_level, Nifg)
 step_orig = np.array([1.0, 0.0001])
 # std_param = np.array([40, 0.06])
@@ -29,22 +29,23 @@ h = h_orig
 # Num_search = np.array([Num_search1, Num_search2])
 std_param = np.array([40, 0.08])
 # calculate the number of search
-Num_search1_max = 80
-Num_search1_min = 80
+Num_search1_max = 120
+Num_search1_min = 120
 Num_search2_max = 1600
-Num_search2_min = 300
+Num_search2_min = 1600
 Num_search = np.array([[Num_search1_max, Num_search1_min], [Num_search2_max, Num_search2_min]])
 success_rate = np.zeros(len(dt_orig))
 for i in range(len(dt_orig)):
     dt = dt_orig[i]
+    time_baseline = np.arange(1, Nifg + 1, 1).reshape(1, Nifg) * dt  # 减小重访周期 dt 能明显改善结果
     print("dt = ", dt)
     iteration = 0
     success = 0
+    est = np.zeros((100, 2))
     while iteration < 100:
         # simulate baseline
         normal_baseline = np.random.normal(size=(1, Nifg)) * 333
         # print(normal_baseline)
-        time_baseline = np.arange(1, Nifg + 1, 1).reshape(1, Nifg) * dt  # 减小重访周期 dt 能明显改善结果
         # print(time_baseline)
         # calculate the input parameters of phase
         v2ph = af.v_coef(time_baseline).T
@@ -52,7 +53,7 @@ for i in range(len(dt_orig)):
         # print(h2ph)
         par2ph = [h2ph, v2ph]
         # phase_obsearvation simulate
-        phase_obs, snr = af.sim_arc_phase(v, h, v2ph, h2ph, noise_level)
+        phase_obs, snr, phase_true = af.sim_arc_phase(v, h, v2ph, h2ph, noise_level)
         # normalize the intput parameters
         data_set = af.input_parameters(par2ph, step_orig, Num_search, param_orig, param_name)
         # print(data_set)
@@ -75,16 +76,22 @@ for i in range(len(dt_orig)):
                 data_set[key]["Num_search_min"] = 10
 
             count += 1
-        if abs(est_param["height"] - h_orig) < 0.005 and abs(est_param["velocity"] - v) < 0.00025:
+        if abs(est_param["height"] - h_orig) < 0.01 and abs(est_param["velocity"] - v) < 0.00014:
             success += 1
-        # else:
-        #     print(est_param)
+
+        est[iteration, 0] = est_param["height"]
+        est[iteration, 1] = est_param["velocity"]
         iteration += 1
+
+    with open("/data/tests/jiaxing/scientific_research_with_python_demo/scientific_research_with_python_demo/data_save/dT0_3_est_nifg20SNR50.csv", "a") as f:
+        # 按列追加保存
+        np.savetxt(f, est, delimiter=",")
     # success rate
     print(success / iteration)
     success_rate[i] = success / iteration
-print(success_rate)
-np.savetxt("/data/tests/jiaxing/scientific_research_with_python_demo/scientific_research_with_python_demo/data_save/test_dt.txt", success_rate)
+
+np.savetxt("/data/tests/jiaxing/scientific_research_with_python_demo/scientific_research_with_python_demo/data_save/dT0_3success_SNR50nifg_20.csv", success_rate)
 T2 = time.perf_counter()
 print("程序运行时间:%s秒" % (T2 - T1))
-dp.bar_plot(dt_orig * 12, success_rate, "Nifg=10,SNR=70db", "test_dt", 0.1 * 12, "dt/day")
+dp.line_plot(dt_orig * 12, success_rate, "Nifg=20,SNR=50db,v=0.005,h=30", "dT0_3_50nifg_20", "dt/day")
+print("data\;plot")

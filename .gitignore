@@ -127,3 +127,7 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# data
+/scientific_research_with_python_demo/data_save/
+/scientific_research_with_python_demo/plot/

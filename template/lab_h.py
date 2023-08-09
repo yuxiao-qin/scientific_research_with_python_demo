@@ -11,9 +11,9 @@ T1 = time.perf_counter()
 # initial parameters
 # ------------------------------------------------
 WAVELENGTH = 0.0056  # [unit:m]
-Nifg = 10
-v_orig = 0.05  # [mm/year] 减少v，也可以改善估计结果，相当于减少了重访周期
-h_orig = np.arange(10, 201, 1)  # [m]，整数 30 循环迭代搜索结果有问题
+Nifg = 20
+v_orig = 0.005  # [mm/year] 减少v，也可以改善估计结果，相当于减少了重访周期
+h_orig = np.arange(1, 1501, 1) *0.1 # [m]，整数 30 循环迭代搜索结果有问题
 noise_level = 70
 # noise_phase = af.sim_phase_noise(noise_level, Nifg)
 step_orig = np.array([1.0, 0.0001])
@@ -27,17 +27,18 @@ param_name = ["height", "velocity"]
 # success = 0
 # std_param = {"height": 40, "velocity": 0.1}
 std_param = np.array([100, 0.03])
-Num_search1_max = 200
-Num_search1_min = 80
+Num_search1_max = 120
+Num_search1_min = 120
 Num_search2_max = 1600
-Num_search2_min = 300
+Num_search2_min = 1600
 Num_search = np.array([[Num_search1_max, Num_search1_min], [Num_search2_max, Num_search2_min]])
 v = v_orig
 success_rate = np.zeros(len(h_orig))
-est = np.zeros((382, 100))
+time_baseline = np.arange(1, Nifg + 1, 1).reshape(1, Nifg)  # 减小重访周期 dt 能明显改善结果
 for i in range(len(h_orig)):
     h = h_orig[i]
     print("h = ", h)
+    est = np.zeros((100, 2))
     # calculate the number of search
     iteration = 0
     success = 0
@@ -45,7 +46,7 @@ for i in range(len(h_orig)):
         # simulate baseline
         normal_baseline = np.random.normal(size=(1, Nifg)) * 333
         # print(normal_baseline)
-        time_baseline = np.arange(1, Nifg + 1, 1).reshape(1, Nifg)  # 减小重访周期 dt 能明显改善结果
+
         # print(time_baseline)
         # calculate the input parameters of phase
         v2ph = af.v_coef(time_baseline).T
@@ -53,7 +54,7 @@ for i in range(len(h_orig)):
         # print(h2ph)
         par2ph = [h2ph, v2ph]
         # phase_obsearvation simulate
-        phase_obs, snr = af.sim_arc_phase(v, h, v2ph, h2ph, noise_level)
+        phase_obs, snr, phase_true = af.sim_arc_phase(v, h, v2ph, h2ph, noise_level)
         # print(phase_obs)
         # normalize the intput parameters
         data_set = af.input_parameters(par2ph, step_orig, Num_search, param_orig, param_name)
@@ -73,24 +74,27 @@ for i in range(len(h_orig)):
                 # update the step
                 data_set[key]["step_orig"] *= 0.1
                 # update the number of search
-                data_set[key]["Num_search_max"] = 10
-                data_set[key]["Num_search_min"] = 10
+                data_set[key]["Num_search_max"] = 100
+                data_set[key]["Num_search_min"] = 100
 
             count += 1
         # print(est_param)
-        est[i, iteration] = est_param["height"]
-        est[i + 191, iteration] = est_param["velocity"]
-        if abs(est_param["height"] - h) < 0.005 and abs(est_param["velocity"] - v) < 0.00025:
+
+        if abs(est_param["height"] - h) < 0.03 and abs(est_param["velocity"] - v) < 0.00005:
             success += 1
-        # else:
-        #     print(est_param)
+
+        est[iteration, 0] = est_param["height"]
+        est[iteration, 1] = est_param["velocity"]
         iteration += 1
+    with open("/data/tests/jiaxing/scientific_research_with_python_demo/scientific_research_with_python_demo/data_save/TH0.1_est_SNR70nifg20.csv", "a") as f:
+        # 按列追加保存
+        np.savetxt(f, est, delimiter=",")
     # success rate
     success_rate[i] = success / iteration
     print(success / iteration)
-print(success_rate)
-np.savetxt("/data/tests/jiaxing/scientific_research_with_python_demo/scientific_research_with_python_demo/data_save/snr_h_test3.txt", success_rate)
-np.savetxt("/data/tests/jiaxing/scientific_research_with_python_demo/scientific_research_with_python_demo/data_save/snr_h_test3_est.csv", np.transpose(est, success_rate))
-dp.bar_plot(h_orig, success_rate, "Nifg=10,SNR=70db,dt=12,v=0.05", "snr_h_test3", 1, "h/m")
+np.savetxt("/data/tests/jiaxing/scientific_research_with_python_demo/scientific_research_with_python_demo/data_save/TH0.1success_SNR70nifg_20.csv", success_rate)
+
 T2 = time.perf_counter()
+dp.line_plot(h_orig, success_rate, "SNR=70,dt=12,v=0.005,nifg=20,loop_search=100dx", "TH0x1_70nifg_20", "h/m")
+
 print("程序运行时间:%s秒" % (T2 - T1))

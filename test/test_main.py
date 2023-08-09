@@ -320,3 +320,11 @@ def test_gauss_noise():
     actual = signal_noise.shape
     desired = (5, 1)
     assert actual == desired
+
+
+def test_compute_ahat():
+    A = np.array([[1, 2, 3], [4, 5, 6], [0, 0, 1]])
+    y = np.array([[1, 2, 1]]).T
+    actual = af.compute_ahat(A, y)
+    desired = np.array([[2 / 3, -4 / 3, 1]]).T
+    assert np.isclose(actual, desired).all()
